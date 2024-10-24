@@ -54,6 +54,7 @@ tablelist         : no
 footnotelist      : no
 classoption       : "man, donotrepeattitle"
 output            : papaja::apa6_pdf
+# output            : papaja::apa6_word
 note              : "\\clearpage" ## this moves the author note section to a second page
 # output            : papaja::apa6_word
 editor_options: 
