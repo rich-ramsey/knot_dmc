@@ -45,15 +45,11 @@ At the top level of the folder, there are several files.
 
 - There is one R markdown file:
 
-**effects.Rmd**
-
-- This file reads in the main DMC model, wrangles parameter estimates and creates some plots.
+**effects.Rmd**. This file reads in the main DMC model, wrangles parameter estimates and creates some plots.
 
 - There is one renv.lock file
 
-**renv.lock**
-
-renv() produces a plain text file that records all package versions.
+**renv.lock**. renv() produces a plain text file that records all package versions.
 
 ## folders ##
 
