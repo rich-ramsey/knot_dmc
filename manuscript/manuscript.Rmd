@@ -43,7 +43,7 @@ abstract: |
   
   <!-- https://tinyurl.com/ybremelq -->
 keywords          : "evidence accumulation modelling, training, learning, action, naming, cognitive mechanisms, plasticity"
-wordcount         : "6493"
+wordcount         : "6489"
 bibliography      : ["references.bib", "r-references.bib"]
 floatsintext      : yes
 linenumbers       : yes
