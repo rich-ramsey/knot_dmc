@@ -35,22 +35,27 @@ This project serves two complementary aims, which are as follows:
 
 # Organisation of files and folders #
 
+## files ##
+
 At the top level of the folder, there are several files.
 
 - There is one R project file:
 
 **knot_dmc.Rproj**. 
 
-- There is one R markdown files:
+- There is one R markdown file:
 
 **effects.Rmd**
 
 - This file reads in the main DMC model, wrangles parameter estimates and creates some plots.
 
+- There is one renv.lock file
+
 **renv.lock**
 
 renv() produces a plain text file that records all package versions.
 
+## folders ##
 
 There are also folders, with self-explanatory titles: 
 
@@ -58,7 +63,15 @@ There are also folders, with self-explanatory titles:
 
 This is where the figures are stored.
 
+**/models/**
+
+The main model object, which was taken from the OSF, is stored here for convenience. 
+
 **/manuscript/**
 
 This is where the manuscript .Rmd file and .pdf files are stored, along with the .bib files that contain references. 
 For more information on using papaja() for manuscripts, see the [papaja manual](https://frederikaust.com/papaja_man/)
+
+**/packages/**
+
+Information on installing R packages is stored in this folder.
