@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+/dmc
+/tutorial
+/sandpit
+/models
+*modelKN.RData
+/old_git
