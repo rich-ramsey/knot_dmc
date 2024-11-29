@@ -4,6 +4,10 @@ This project incorporates the main evidence accumulation analyses performed by S
 
 We also provide code to run the manifest analysis of reaction time and accuracy separately.
 
+Samantha Parker, Emily S. Cross, & Richard Ramsey. Evidence accumulation modelling offers new insights into the cognitive mechanisms that underlie linguistic and action-based training.
+
+Preprint: 
+
 # Basic components of the workflow #
 
 - [renv()](https://rstudio.github.io/renv/articles/renv.html) to manage R package versions
@@ -41,7 +45,7 @@ Please email Samantha Parker (samantha.parker [[at]] students.mq.edu.au) or
 Richard Ramsey (richard.ramsey [[at]] hest.ethz.ch) and we will share the data and model objects with 
 you, as long as it is for research purposes.
 
-# A note on using the R Markdown files, which are listed below #
+# A note on using the R Markdown files listed below #
 
 Some files, such as wrangle and effects files, can be executed chunk-by-chunk or in one entire script.
 
@@ -108,15 +112,15 @@ In various folders, there are subfolders, which denote:
 **/descriptive/**. descriptive plots of rt and accuracy.
 
 
-## other things to consider ##
+# How do I use the files? #
 
-### DMC software ###
+## DMC software ##
 
 To use the DMC software, please see the [DMC website](https://osf.io/pbwx8/) and download the current release zip file. 
 
 Then place the /dmc/ and /tutorial/ folders at the top level of your analysis folder.
 
-# How do I use the files? #
+## Add some additional folders ##
 
 First, create a folder called **/data/** in the top level directory.
 
