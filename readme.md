@@ -1,9 +1,8 @@
 This project creates a reproducible manuscript for the knots dynamic models of choice (dmc) project using the R package papaja().
 
-This project is supplementary to the main analyses performed by Sam.
-As such, the main analysis, data, models and code are stored on the open science framework: [https://osf.io/ea6gk/](https://osf.io/ea6gk/)
+This project incorporates the main evidence accumulation analyses performed by Sam.
 
-The purpose of this project is just to produce the manuscript in papaja() and create any figures that are additional to those that are already compiled and available on the OSF.
+We also provide code to run the manifest analysis of reaction time and accuracy separately.
 
 # Basic components of the workflow #
 
@@ -25,13 +24,29 @@ If you want to see and work with the code, then:
 
 # Aims #
 
-As stated above, the main analysis, data, models and code are stored on the [open science framework](https://osf.io/ea6gk/).
-
 This project serves two complementary aims, which are as follows:
 
-1. Produce the manuscript using papaja() package in R.
+1. Make the entire analysis workflow available via R scripts.
 
-2. Produce a summary plot the of main findings, which illustrates main findings using a decision model plotting format.
+2. Produce the manuscript in a computationally reproducible from using the papaja() package in R.
+
+# A note on code and raw data availability #
+
+All of the analysis code used in this paper are available with this repository.
+
+However, given that the data were collected several years before 2012, it was not 
+yet routine to request explicit consent to share data publicly.
+Therefore, the raw data and model objects (which include the raw data) are only available from the authors upon request.
+Please email Samantha Parker (samantha.parker [[at]] students.mq.edu.au) or 
+Richard Ramsey (richard.ramsey [[at]] hest.ethz.ch) and we will share the data and model objects with 
+you, as long as it is for research purposes.
+
+# A note on using the R Markdown files, which are listed below #
+
+Some files, such as wrangle and effects files, can be executed chunk-by-chunk or in one entire script.
+
+In contrast, the models files are not written to be executed in one go. 
+This is because some of the modelling steps take a long time, so we suggest running them chunk-by-chunk.
 
 # Organisation of files and folders #
 
@@ -43,9 +58,19 @@ At the top level of the folder, there are several files.
 
 **knot_dmc.Rproj**. 
 
-- There is one R markdown file:
+- There are several R markdown files:
 
-**effects.Rmd**. This file reads in the main DMC model, wrangles parameter estimates and creates some plots.
+**effects_lba.Rmd**. This file reads in the main DMC model, wrangles parameter estimates and creates some plots.
+
+**effects_lba_summary.Rmd**. This file reads in the main DMC model, wrangles parameter estimates and creates some summary plots.
+
+**effects_rt_acc.Rmd**. This file reads in the main brms model, wrangles parameter estimates and creates some plots.
+
+**model_lba.Rmd**. This file builds the main evidence accumulartion model (LBA model) using the DMC software.
+
+**model_rt_acc.Rmd**. This file builds Bayesian regression models of rt and accuracy seperately using the brms package. 
+
+**wrangle.Rmd**. This file wrangles the data, makes summary plots and writes out data for subsequent analyses.
 
 - There is one renv.lock file
 
@@ -59,10 +84,9 @@ There are also folders, with self-explanatory titles:
 
 This is where the figures are stored.
 
-**/models/**
+**/tables/**
 
-The main model object, which is available upon request from the authors.
-Please email Samantha Parker (samantha.parker@students.mq.edu.au) or Richard Ramsey (richard.ramsey@hest.ethz.ch)
+This is where the tables are stored.
 
 **/manuscript/**
 
@@ -72,3 +96,40 @@ For more information on using papaja() for manuscripts, see the [papaja manual](
 **/packages/**
 
 Information on installing R packages is stored in this folder.
+
+## subfolders ##
+
+In various folders, there are subfolders, which denote:
+
+**/ea/**. evidence accumulation
+
+**/manifest/**. manifest analyses of rt and accuracy separately
+
+**/descriptive/**. descriptive plots of rt and accuracy.
+
+
+## other things to consider ##
+
+### DMC software ###
+
+To use the DMC software, please see the [DMC website](https://osf.io/pbwx8/) and download the current release zip file. 
+
+Then place the /dmc/ and /tutorial/ folders at the top level of your analysis folder.
+
+# How do I use the files? #
+
+First, create a folder called **/data/** in the top level directory.
+
+Within the data folder, create a subfolder: 
+
+**/processed/**. This is where you would place the processed data if requested from the authors.
+
+Second, create a folder called **/models/** in the top level directory.
+
+Within the models folder, create two subfolders: 
+
+**/ea/**. This is where you would place the evidence accumulation models if requested from the authors or this is where the model_lba.Rmd script would write to.
+
+**/manifest/**. This is where you would place the brms regression models if requested from the authors or this is where the model_rt_acc.Rmd script would write to.
+
+If you want reproduce the entire workflow, then start with the wrangle file, then the models file and then the effects files.
