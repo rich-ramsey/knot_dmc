@@ -169,7 +169,7 @@ There was some evidence of an effect of training type on accuracy (see Figure 1A
 (ref:accuracy-rt-caption) Accuracy and Reaction Time by Training Type and Session. (A) Percent correct on the perceptual discrimination task by training type. (B) Mean reaction time (ms) on the perceptual discrimination task by training type. Black points denote group means, while error bars represent within subjects’ standard errors of the mean. Grey points denote individual subject means.
 
 ```{r accuracy-rt-plot, fig.cap = "(ref:accuracy-rt-caption)"}
-knitr::include_graphics("../figures/from_file/acc_rt.png")
+knitr::include_graphics("../figures/descriptive/violin_acc_rt.jpeg")
 ```
 
 ## Evidence Accumulation Modelling
@@ -183,7 +183,7 @@ Pairwise comparisons between each training condition and the untrained condition
 (ref:threshold-caption) Posterior Distributions for the Threshold Parameter by Training Condition and Pairwise Differences between Training Conditions. (A) This panel demonstrates the posterior distributions for the threshold parameter of the LBA model by training condition. (B) This panels shows the difference in the posterior distribution for the threshold parameter between each training condition relative to the untrained condition (top row) and between each training condition (bottom row). In all graphs, black points represent the median value of the posterior distribution, while thick black lines represent the 95% quantile interval of the distribution. In difference graphs, the red line represents the zero point of the distribution.
 
 ```{r threshold-plot, fig.cap = "(ref:threshold-caption)"}
-knitr::include_graphics("../figures/from_file/thresholds.png")
+knitr::include_graphics("../figures/ea/thresholds.jpeg")
 ```
 
 ### Drift rate
@@ -195,7 +195,7 @@ As can be seen in Figure 3B there was also evidence that the drift rate differen
 (ref:drift-rate-caption) Posterior Distributions for the Drift Rate Difference Parameter by Training Condition and Pairwise Differences between Training Conditions. (A) This panel demonstrates the posterior distributions for the drift-rate parameter of the LBA model by training condition. (B) This panels shows the difference in the posterior distribution for the drift-rate parameter between each training condition relative to the untrained condition (top row) and between each training condition (bottom row). In all graphs, black points represent the median value of the posterior distribution, while thick black lines represent the 95% quantile interval of the distribution. In difference graphs, the red line represents the zero point of the distribution.
 
 ```{r drift-rate-plot, fig.cap = "(ref:drift-rate-caption)"}
-knitr::include_graphics("../figures/from_file/drift_rate.png")
+knitr::include_graphics("../figures/ea/drift_rate.jpeg")
 ```
 
 In summary, a clear benefit emerged in terms of the quality and quantity of information processing during task performance following training that jointly involved both types of learning (naming and typing). A smaller benefit was observed for information processing when only one type of training was provided (naming or tying). In other words, all types of training, albeit to different degrees, made the drift-rate parameter associated with the accurate response steeper than the incorrect response. All things being equal, the benefit of such drift-rate effects to performance would be faster and more accurate responses.
@@ -211,7 +211,7 @@ Given that motor preparation for such a simple key-pressing task is unlikely to 
 (ref:ndt-caption) Posterior Distributions for the Non-decision Time (ndt) Parameter by Training Condition and Pairwise Differences between Training Conditions. (A) This panel demonstrates the posterior distributions for the ndt parameter of the LBA model by training condition. (B) This panels shows the difference in the posterior distribution for the ndt parameter between each training condition relative to the untrained condition (top row) and between each training condition (bottom row). In all graphs, black points represent the median value of the posterior distribution, while thick black lines represent the 95% quantile interval of the distribution. In difference graphs, the red line represents the zero point of the distribution.
 
 ```{r ndt-plot, fig.cap = "(ref:ndt-caption)"}
-knitr::include_graphics("../figures/from_file/ndt.png")
+knitr::include_graphics("../figures/ea/ndt.jpeg")
 ```
 
 ### Summary
@@ -221,7 +221,7 @@ To help visualise the pattern of results across conditions, in Figure 5 we plot 
 (ref:lba-summary-caption) A summary of the key findings visualised using the structure of a decision model plot. Each panel represents an experimental condtion and displays the same information. The grey column represents non-decision time (ndt) with its thickness representing the amount of ndt. Start point (A) was fixed across conditions and does not vary. For ease of presentation, two thresholds (b, dashed black lines) are displayed per condition. The lower threshold represents a mismatch between the displayed knots and the higher threshold represents a match between the displayed knots on a given trial. The mean drift rate (v) for true (solid green) and false (dashed orange) responses are also displayed.
 
 ```{r lba-summary-plot, fig.cap = "(ref:lba-summary-caption)"}
-knitr::include_graphics("../figures/lba_summary.jpeg")
+knitr::include_graphics("../figures/ea/lba_summary.jpeg")
 ```
 
 
