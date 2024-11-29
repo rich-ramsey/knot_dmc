@@ -1,0 +1,585 @@
+---
+title: "effects_rt_acc"
+author: "Sam & Rich"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Secondary analysis of manifest measures in knots data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file visualises and tabulates parameters in the most complex model from the manifest analysis of the knots data.
+
+This file focusses on the effects from reaction time and accuracy models. 
+
+# load libraries #
+
+```{r load-pkg}
+pkg <- c("tidyverse", "RColorBrewer", "patchwork", "brms", "tidybayes", 
+         "ggdist", "future", "bayesplot", "parallel", "here", "tinytable",
+         "webshot2")
+
+lapply(pkg, library, character.only = TRUE)
+```
+
+# plot settings #
+
+theme settings for ggplot
+
+```{r, eval = F}
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 18, face = "bold"), 
+          title = element_text(size = 18, face = "bold"),
+          legend.position = "bottom")
+)
+
+## Set the amount of dodge in figures
+pd <- position_dodge(0.7)
+pd2 <- position_dodge(1)
+```
+
+# table options #
+
+```{r}
+options(tinytable_tt_digits = 2,
+        tinytable_print_output = "markdown")
+```
+
+# 1. look at reaction time #
+
+## 1.1 read in model object, fits and data (as necessary) ##
+
+```{r}
+# rt
+b1 <- readRDS("models/manifest/b1.rds")
+```
+
+read in the data
+
+```{r}
+# rt data
+data_rt <- read_csv("data/processed/data_rt.csv") %>% 
+  mutate(PID=factor(PID),
+         GROUP = factor(GROUP,
+                        levels = c("untrained", "name", "tie", "both")))
+head(data_rt)
+```
+
+## 1.2 Look at the point and interval estimates for the full models ##
+
+### summarise point and interval estimates for all aspects of the model ###
+
+using posterior_samples and tidybayes
+
+```{r}
+post <- as_draws_df(b1) %>% #
+  select(-lp__) %>% 
+  as_tibble()
+
+post_summary <- posterior_summary(b1, robust = TRUE)
+
+# all fixed effects
+post_qi_b <- post %>%
+  select(starts_with("b_")) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  median_qi(value)
+head(post_qi_b)
+
+# average varying effects - SD
+post_qi_sd <- post %>%
+  select(starts_with("sd_")) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  median_qi(value)
+head(post_qi_sd)
+
+# varying effects by participant 
+# I take this to be 18 pts x 5 terms (ndt_intercept, intercept, 3 levels of group) = 90 in total
+vary_vals <- post %>%
+  select(starts_with("r_")) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  median_qi(value)
+head(vary_vals)
+```
+
+### visualise fixed effects ###
+
+Using posterior_samples and tidybayes
+
+```{r}
+## fixed effects of interest, excluding basic intercepts 
+## Is this the right way to label the interaction?
+tidy_fixed <- post %>% 
+  select(starts_with("b_")) %>% # select and rename in simpler labels.
+  pivot_longer(everything()) %>% # move from wide to long
+  mutate(key = factor(name, levels=unique(name)),
+         term = if_else(str_detect(name, "ndt"), "ndt_intercept",
+                if_else(str_detect(name, "name"), "name",
+                if_else(str_detect(name, "tie"), "tie",
+                if_else(str_detect(name, "both"), "both", "intercept")))),
+         term = factor(term, levels=unique(term)))
+head(tidy_fixed)
+tail(tidy_fixed)
+
+## check labels
+check.labels <- tidy_fixed %>% 
+  group_by(key, term) %>% 
+  distinct(key, term)
+check.labels
+
+# remove intercepts as they are on a different scale and make it difficult to plot
+tidy_fixed <- tidy_fixed %>%
+  filter(!term %in% c("intercept", "ndt_intercept"))
+head(tidy_fixed)
+
+check.labels <- tidy_fixed %>% 
+  group_by(key, term) %>% 
+  distinct(key, term)
+check.labels
+
+p_tidy_fixed <- ggplot(tidy_fixed, aes(x = value, y = fct_rev(term), 
+                                       fill=term)) +  
+  geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
+  stat_halfeye(alpha=0.7) +
+  labs(title = "fixed effects of condition",
+       x = "Log(RT)", y = NULL) +
+  scale_fill_brewer(palette = "Dark2")
+p_tidy_fixed
+
+ggsave ("figures/manifest/b1_fixef.jpeg")
+```
+
+### visualise varying effects ###
+
+using posterior samples and tidybayes.
+
+variance at the group level (i.e., intercepts and effects across participants) 
+
+```{r}
+## random effects of interest, including item, as well as participant and effects across pts
+tidy_varying <- post %>% 
+  select(contains("sd_")) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(key = factor(name, levels=unique(name)),
+         term = if_else(str_detect(name, "ndt"), "ndt_intercept",
+                if_else(str_detect(name, "name"), "name",
+                if_else(str_detect(name, "tie"), "tie",
+                if_else(str_detect(name, "both"), "both", "intercept")))),
+         term = factor(term, levels=c("ndt_intercept", "intercept",
+                                      "name", "tie", "both")))
+head(tidy_varying)
+tail(tidy_varying)
+str(tidy_varying)
+
+check.varying <- tidy_varying %>% 
+  group_by(key, term) %>% 
+  distinct(key, term)
+check.varying
+
+p_tidy_varying_pid <- ggplot(tidy_varying, aes(x = value, y = fct_rev(term))) +  
+  geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
+  stat_halfeye(alpha = 0.7) +
+  labs(title = "SD plot for varying participant effects",
+       x = NULL, y = NULL) +
+  coord_cartesian(xlim =c(0, 0.5))+
+  scale_x_continuous(breaks=seq(0,1,0.1))
+p_tidy_varying_pid
+
+ggsave ("figures/manifest/b1_varying_pid.jpeg")
+```
+
+### visualise variance within group levels ###
+
+i.e., at the individual participant level 
+
+Note - this should be in a centred metric so that deviation from the group average (zero) can be visualised. All good, but interpreting intercepts in some cases can difficult because it is when all other factors are zero. It can therefore be a little difficult to interpret and they may not be completely symmetric around zero for that reason. 
+
+use output from posterior summary and wrangle
+
+```{r}
+# first filter and create new tibbles
+# mutate here to create factors to preserve order of term - useful when plotting. Also create a new outlier variable and factor it. You could do the outlier variable in one step possibly using as_factor, but this does the job.
+
+# participant level
+vary_pt <- post_summary %>%
+  data.frame() %>% 
+  rownames_to_column("param") %>% 
+  filter(str_detect(param, "r_PID"),
+         str_detect(param, "cor", negate = TRUE)) %>% 
+  mutate(term = if_else(str_detect(param, "ndt"), "ndt_intercept",
+                if_else(str_detect(param, "name"), "name",
+                if_else(str_detect(param, "tie"), "tie",
+                if_else(str_detect(param, "both"), "both", "intercept")))),
+        term = factor(term, levels=c("ndt_intercept", "intercept",
+                                      "name", "tie", "both"))) %>%  
+  arrange(term, Estimate) %>% 
+  mutate(rank = rep(1:18, times=5),
+         outlier = if_else(Q2.5 > 0 | Q97.5 < 0, "yes", "no"), 
+         outlier = factor(outlier, levels = c("no", "yes")))
+head(vary_pt)
+```
+
+plot varying effects via caterpillar plots
+
+variation by participant
+
+```{r}
+p_tidy_varyvals <- ggplot(vary_pt, aes(x=rank, y=Estimate,
+                                           colour=outlier))+
+  geom_pointrange(aes(ymin=Q2.5,ymax=Q97.5),fatten = 0.5)+
+  geom_hline(yintercept=0, colour = "red")+
+  scale_colour_manual(values=c("darkgrey","black")) +
+  labs(title = "Varying effects by participant",
+       x = "participant id")+
+  facet_wrap(~term) +
+  theme(legend.position = "none")
+p_tidy_varyvals
+
+ggsave ("figures/manifest/b1_varyvals.jpeg")
+```
+
+## 1.3 plot in the original metric as a function of conditions ##
+
+This can be useful to see what the model predicts in terms of reaction time or points on a scale, rather than parameter estimates. This is especially relevant for more complex models like shifted log normal models where individual parameters may be hard to interpret on their own.
+
+### posterior predictions ###
+
+calculate
+
+```{r}
+ppreds_rt <- data_rt %>%
+  distinct(PID, GROUP) %>%
+  add_epred_draws(b1) 
+head(ppreds_rt)
+tail(ppreds_rt)
+```
+
+summary
+
+```{r}
+ppreds_rt_g <- ppreds_rt %>% 
+  group_by(GROUP, .draw) %>% 
+  summarise(.epred = mean(.epred))
+ppreds_rt_g
+```
+
+plot
+
+```{r}
+p_ppreds_rt <- ggplot(ppreds_rt_g, aes(x = GROUP, y = .epred, 
+                                       fill=GROUP)) +  
+  stat_halfeye(alpha=0.7) +
+  labs(x = "condition", y = "RT (ms)") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none")
+p_ppreds_rt
+```
+
+calculate quantiles
+
+```{r}
+ppreds_rt_q <- ppreds_rt_g %>% 
+  group_by(GROUP) %>% 
+  median_qi(.epred)
+ppreds_rt_q
+```
+
+make a table
+
+```{r}
+ppred_rt_tab <- ppreds_rt_q %>%
+  select(GROUP, .epred, .lower, .upper) %>% 
+  rename(condition = GROUP)
+ppred_rt_tab
+
+# ## make a table using tinytable
+tt_rt_tab <- tt(ppred_rt_tab,
+                caption="Posterior predictions for RT") %>% 
+  theme_tt("striped")
+tt_rt_tab
+
+## save it as a png
+save_tt(tt_rt_tab, here("tables/manifest", "b1_ppreds_rt.png"),
+        overwrite = T)
+```
+
+
+# 2. look at accuracy #
+
+## 2.1 read in model object, fits and data (as necessary) ##
+
+```{r}
+# acc
+ab1 <- readRDS("models/manifest/ab1.rds")
+```
+
+read in the data
+
+```{r}
+# acc data
+data_acc <- read_csv("data/processed/data_acc.csv") %>% 
+    mutate(PID=factor(PID),
+           GROUP = factor(GROUP,
+                          levels = c("untrained", "name", "tie", "both")))
+head(data_acc)
+```
+
+## 2.2 Look at the point and interval estimates for the full models ##
+
+### summarise point and interval estimates for all aspects of the model ###
+
+using posterior_samples and tidybayes
+
+```{r}
+post <- as_draws_df(ab1) %>% #
+  select(-lp__) %>% 
+  as_tibble()
+
+post_summary <- posterior_summary(ab1, robust = TRUE)
+
+# all fixed effects
+post_qi_b <- post %>%
+  select(starts_with("b_")) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  median_qi(value)
+head(post_qi_b)
+
+# average varying effects - SD
+post_qi_sd <- post %>%
+  select(starts_with("sd_")) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  median_qi(value)
+head(post_qi_sd)
+
+# varying effects by participant 
+# I take this to be 18 pts x 4 terms (intercept, 3 levels of group) = 72 in total
+vary_vals <- post %>%
+  select(starts_with("r_")) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  median_qi(value)
+head(vary_vals)
+```
+
+### visualise fixed effects ###
+
+Using posterior_samples and tidybayes
+
+```{r}
+## fixed effects of interest, excluding basic intercepts 
+## Is this the right way to label the interaction?
+tidy_fixed <- post %>% 
+  select(starts_with("b_")) %>% # select and rename in simpler labels.
+  pivot_longer(everything()) %>% # move from wide to long
+  mutate(key = factor(name, levels=unique(name)),
+         term = if_else(str_detect(name, "name"), "name",
+                if_else(str_detect(name, "tie"), "tie",
+                if_else(str_detect(name, "both"), "both", "intercept"))),
+         term = factor(term, levels=unique(term)))
+head(tidy_fixed)
+tail(tidy_fixed)
+
+## check labels
+check.labels <- tidy_fixed %>% 
+  group_by(key, term) %>% 
+  distinct(key, term)
+check.labels
+
+# remove intercepts as they are on a different scale and make it difficult to plot
+tidy_fixed <- tidy_fixed %>%
+  filter(!term %in% c("intercept"))
+head(tidy_fixed)
+
+check.labels <- tidy_fixed %>% 
+  group_by(key, term) %>% 
+  distinct(key, term)
+check.labels
+
+p_tidy_fixed <- ggplot(tidy_fixed, aes(x = value, y = fct_rev(term), 
+                                       fill=term)) +  
+  geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
+  stat_halfeye(alpha=0.7) +
+  labs(title = "fixed effects of condition",
+       x = "Accuracy", y = NULL) +
+  scale_fill_brewer(palette = "Dark2")
+p_tidy_fixed
+
+ggsave ("figures/manifest/ab1_fixef.jpeg")
+```
+
+### visualise varying effects ###
+
+using posterior samples and tidybayes.
+
+variance at the group level (i.e., intercepts and effects across participants) 
+
+```{r}
+## random effects of interest, including item, as well as participant and effects across pts
+tidy_varying <- post %>% 
+  select(contains("sd_")) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(key = factor(name, levels=unique(name)),
+         term = if_else(str_detect(name, "name"), "name",
+                if_else(str_detect(name, "tie"), "tie",
+                if_else(str_detect(name, "both"), "both", "intercept"))),
+         term = factor(term, levels=c("intercept",
+                                      "name", "tie", "both")))
+head(tidy_varying)
+tail(tidy_varying)
+str(tidy_varying)
+
+check.varying <- tidy_varying %>% 
+  group_by(key, term) %>% 
+  distinct(key, term)
+check.varying
+
+p_tidy_varying_pid <- ggplot(tidy_varying, aes(x = value, 
+                                               y = fct_rev(term))) +  
+  geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
+  stat_halfeye(alpha = 0.7) +
+  labs(title = "SD plot for varying participant effects",
+       x = NULL, y = NULL) +
+  coord_cartesian(xlim =c(0, 1))+
+  scale_x_continuous(breaks=seq(0,1,0.1))
+p_tidy_varying_pid
+
+ggsave ("figures/manifest/ab1_varying_pid.jpeg")
+```
+
+### visualise variance within group levels ###
+
+i.e., at the individual participant level 
+
+Note - this should be in a centred metric so that deviation from the group average (zero) can be visualised. All good, but interpreting intercepts in some cases can difficult because it is when all other factors are zero. It can therefore be a little difficult to interpret and they may not be completely symmetric around zero for that reason. 
+
+use output from posterior summary and wrangle
+
+```{r}
+# first filter and create new tibbles
+# mutate here to create factors to preserve order of term - useful when plotting. Also create a new outlier variable and factor it. You could do the outlier variable in one step possibly using as_factor, but this does the job.
+
+# participant level
+vary_pt <- post_summary %>%
+  data.frame() %>% 
+  rownames_to_column("param") %>% 
+  filter(str_detect(param, "r_PID"),
+         str_detect(param, "cor", negate = TRUE)) %>% 
+  mutate(term = if_else(str_detect(param, "name"), "name",
+                if_else(str_detect(param, "tie"), "tie",
+                if_else(str_detect(param, "both"), "both", "intercept"))),
+         term = factor(term, levels=c("intercept",
+                                      "name", "tie", "both"))) %>%  
+  arrange(term, Estimate) %>% 
+  mutate(rank = rep(1:18, times=4),
+         outlier = if_else(Q2.5 > 0 | Q97.5 < 0, "yes", "no"), 
+         outlier = factor(outlier, levels = c("no", "yes")))
+head(vary_pt)
+```
+
+plot varying effects via caterpillar plots
+
+variation by participant
+
+```{r}
+p_tidy_varyvals <- ggplot(vary_pt, aes(x=rank, y=Estimate,
+                                           colour=outlier))+
+  geom_pointrange(aes(ymin=Q2.5,ymax=Q97.5),fatten = 0.5)+
+  geom_hline(yintercept=0, colour = "red")+
+  scale_colour_manual(values=c("darkgrey","black")) +
+  labs(title = "Varying effects by participant",
+       x = "participant id")+
+  facet_wrap(~term) +
+  theme(legend.position = "none")
+p_tidy_varyvals
+
+ggsave ("figures/manifest/ab1_varyvals.jpeg")
+```
+
+## 2.3 plot in the original metric as a function of conditions ##
+
+This can be useful to see what the model predicts in terms of reaction time or points on a scale, rather than parameter estimates. This is especially relevant for more complex models like shifted log normal models where individual parameters may be hard to interpret on their own.
+
+### posterior predictions ###
+
+calculate
+
+```{r}
+ppreds_acc <- data_acc %>%
+  distinct(PID, GROUP) %>%
+  add_epred_draws(ab1) 
+head(ppreds_acc)
+tail(ppreds_acc)
+```
+
+summary
+
+```{r}
+ppreds_acc_g <- ppreds_acc %>% 
+  group_by(GROUP, .draw) %>% 
+  summarise(.epred = mean(.epred))
+ppreds_acc_g
+```
+
+plot
+
+```{r}
+p_ppreds_acc <- ggplot(ppreds_acc_g, aes(x = GROUP, y = .epred, 
+                                       fill=GROUP)) +  
+  stat_halfeye(alpha=0.7) +
+  labs(x = "condition", y = "accuracy (%)") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none")
+p_ppreds_acc
+```
+
+calculate quantiles
+
+```{r}
+ppreds_acc_q <- ppreds_acc_g %>% 
+  group_by(GROUP) %>% 
+  median_qi(.epred)
+ppreds_acc_q
+```
+
+make a table
+
+```{r}
+ppred_acc_tab <- ppreds_acc_q %>%
+  select(GROUP, .epred, .lower, .upper) %>% 
+  rename(condition = GROUP)
+ppred_acc_tab
+
+# ## make a table using tinytable
+tt_acc_tab <- tt(ppred_acc_tab,
+                caption="Posterior predictions for accuracy") %>% 
+  theme_tt("striped")
+tt_acc_tab
+
+## save it as a png
+save_tt(tt_acc_tab, here("tables/manifest", "ab1_ppreds_acc.png"),
+        overwrite = T)
+```
+
+
+# 3. plot ppreds for RT and Accuracy together #
+
+```{r}
+p_ppreds <- (p_ppreds_acc | p_ppreds_rt) +
+  plot_annotation(title = "Posterior predictions for accuracy and RT",
+                  tag_levels = 'A')
+p_ppreds
+
+ggsave("figures/manifest/ppreds.jpeg",
+       width = 10, height = 6, dpi = 800)
+```
+

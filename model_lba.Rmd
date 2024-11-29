@@ -1,0 +1,766 @@
+---
+title: "model_lba"
+author: "Sam & Rich"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This script sets up the LBA model, loads in the raw data, fits the model to the data and then samples the hLBA. There are tests at the bottom that compare parameter estimates.
+
+Note - you need to make sure the working directory is the top directory with the models and dmc folder
+
+# load data, models and packages #
+
+```{r}
+source ("dmc/dmc.R")
+load_model ("LBA","lba_B.R") # LBA model with B=b-A parameterization 
+
+library(tidyverse)
+```
+
+Load in the model object if previously run
+
+```{r}
+## The model object is available upon request
+## Please email Samantha Parker (samantha.parker@students.mq.edu.au) or Richard Ramsey (richard.ramsey@hest.ethz.ch)
+# load("models/ea/modelKN.RData")
+```
+
+Load in the raw data (and convert names to match the labels that Sam used when fitting the LBA model)
+
+Knots Data 
+s: Subject ID (1-18)
+S: Stimulus (match vs. mismatch)
+GRP: Training Group (name vs. tie vs. both vs. untrained)
+R: Response (same vs. different)
+RT: Reaction Time (seconds)
+
+For DMC, we also need to rename the levels of the response so that they are unique to stimulus. 
+
+```{r}
+data_lba <- read_csv("data/processed/data_lba.csv") %>%
+  ## rename group
+  rename(GRP = GROUP) %>% 
+  ## reorder
+  select(s, S, GRP, R, RT) %>% 
+  ## rename levels of variables
+  mutate(S = if_else(S==1, "match", "mis"),
+         R = if_else(R==1, "same", "diff")) %>% 
+  ## create factors
+  mutate(s = factor(s),
+         S = factor(S,
+                    levels = c("match", "mis")),
+         GRP = factor(GRP,
+                      levels = c("name", "tie", "both", "untrained")), ## this is the order Sam used.
+         R = factor(R,
+                    levels = c("same", "diff"))) %>% 
+  as.data.frame() ## dmc prefers a data frame rather than a tibble
+head(data_lba)
+str(data_lba)
+```
+
+rename the data to match Sam's naming
+
+```{r}
+data_knots <- data_lba
+```
+
+# STEP 1: Set up the Model Object #
+
+1) List the factors
+
+In this design have a stimulus factor and a group factor (GRP)
+
+```{r}
+factors <- list(S=c("match","mis"), GRP=c("name","tie", "both", "untrained")) 
+```
+
+2) List of responses
+
+```{r}
+responses <- c("same","diff") # Can identify two pictures as the same or different
+```
+
+3) Match map
+Specify which accumulator matches which response
+
+```{r}
+match.map <- list(M=list(match="same",mis="diff"))
+```
+
+4) p.map specifies how the model parameters match to the factors
+
+In this design the threshold parameter (B) can be influenced by GRP and Response (R)
+The drift rate parameter (mean_v) is influenced by GRP and Match
+The non-decision time parameter (t0) can be influenced by the GRP factor
+When specified as 1 this assumes that the parameter is the same for all accumulators
+
+```{r}
+p.map <- list(A="1",B=c("GRP", "R"),t0=c("GRP"),mean_v=c("GRP", "M"),sd_v="M",st0="1") #M needs to be put last
+```
+
+5) Constants
+
+```{r}
+const <- c(sd_v.false=1,st0=0)
+```
+
+6) Create data.model object
+
+```{r}
+model <- model.dmc(p.map,match.map=match.map,constants=const,responses=responses,
+                   factors=factors)
+```
+
+Parameter vector names are: ( see attr(,"p.vector") )
+ [1] "A"                      "B.name.same"            "B.tie.same"             "B.both.same"            "B.untrained.same"      
+ [6] "B.name.diff"            "B.tie.diff"             "B.both.diff"            "B.untrained.diff"       "t0.name"               
+[11] "t0.tie"                 "t0.both"                "t0.untrained"           "mean_v.name.true"       "mean_v.tie.true"       
+[16] "mean_v.both.true"       "mean_v.untrained.true"  "mean_v.name.false"      "mean_v.tie.false"       "mean_v.both.false"     
+[21] "mean_v.untrained.false" "sd_v.true"                 
+
+Constants are (see attr(,"constants") ):
+sd_v.false        st0 
+         1          0 
+
+Model type = norm (posdrift= TRUE ) 
+
+# STEP 2: COMBINE MODEL WITH DATA #
+
+7) Simulate the data to make sure the model is set up correctly
+
+```{r}
+p.vector<- c(A = 1, 
+             B.name.same = 0.5, 
+             B.tie.same = 0.5, 
+             B.both.same = 0.5, 
+             B.untrained.same = 0.5, 
+             B.name.diff = 0.5, 
+             B.tie.diff = 0.5, 
+             B.both.diff = 0.5, 
+             B.untrained.diff = 0.5, 
+             t0.name = .2, 
+             t0.tie = .2, 
+             t0.both = .2,
+             t0.untrained = .2,
+             mean_v.name.true = 1, 
+             mean_v.tie.true = 1, 
+             mean_v.both.true = 1, 
+             mean_v.untrained.true = 1,
+             mean_v.name.false = 0, 
+             mean_v.tie.false = 0, 
+             mean_v.both.false = 0, 
+             mean_v.untrained.false = 0,
+             sd_v.true = 0.5) #
+check.p.vector(p.vector,model) #If everything ok nothing returned
+print.cell.p(p.vector,model)
+
+# Simulate this is for one subject
+data <- simulate.dmc(p.vector,model,1e4)
+data.model <- data.model.dmc(data,model)
+plot.cell.density(data.model[data.model$S=='match',],C="same")
+plot.cell.density(data.model[data.model$S=='match',],C="diff")
+
+#This is for 20 subjects, 40 data points per subject
+data1 <- h.simulate.dmc(model,ps=p.vector,ns=20,n=40)
+data1.model <- data.model.dmc(data1,model)
+```
+
+8) Create the data model object
+
+```{r}
+data.model <- data.model.dmc(data_knots,model)
+```
+
+Plot the first two subjects to check
+
+```{r}
+ par(mfcol=c(2,4)) 
+ for (i in 1:2) {
+   plot.cell.density(data.cell=data.model[[i]][data.model[[i]]$GRP=="name" & data.model[[i]]$S=="match",],C="same")
+   plot.cell.density(data.cell=data.model[[i]][data.model[[i]]$GRP=="name" & data.model[[i]]$S=="match",],C="diff")
+   plot.cell.density(data.cell=data.model[[i]][data.model[[i]]$GRP=="tie" & data.model[[i]]$S=="mis",],C="mis")
+   plot.cell.density(data.cell=data.model[[i]][data.model[[i]]$GRP=="tie" & data.model[[i]]$S=="mis",],C="same")
+ }  
+```
+
+Save the data model object
+
+```{r}
+dmKN <- data.model
+save(data.model, file = "data/ea/models/dmKN.RData")
+```
+
+# STEP 3: CREATE PRIORS #
+
+Threshold parameters are 1
+Start point parameters is 1
+Rate parameters are 1 for matching accumulators and 0 for mismatching accumulators
+sv for matching is .5
+t0 is .2
+t0 is truncated at 1 seconds, v is unbounded, A, B, and sd
+
+```{r}
+## Standard deviations of population priors should be broad. Means should be roughly plausible values. 
+pop.mean <- c(A = 1, 
+             B.name.same = 0.5, 
+             B.tie.same = 0.5, 
+             B.both.same = 0.5, 
+             B.untrained.same = 0.5, 
+             B.name.diff = 0.5, 
+             B.tie.diff = 0.5, 
+             B.both.diff = 0.5, 
+             B.untrained.diff = 0.5, 
+             t0.name = .2, 
+             t0.tie = .2, 
+             t0.both = .2,
+             t0.untrained = .2,
+             mean_v.name.true = 1, 
+             mean_v.tie.true = 1, 
+             mean_v.both.true = 1, 
+             mean_v.untrained.true = 1,
+             mean_v.name.false = 0, 
+             mean_v.tie.false = 0, 
+             mean_v.both.false = 0, 
+             mean_v.untrained.false = 0,
+             sd_v.true = 0.5) #
+pop.scale <-c(A = 2, 
+             B.name.same = 2, 
+             B.tie.same = 2, 
+             B.both.same = 2, 
+             B.untrained.same = 2, 
+             B.name.diff = 2, 
+             B.tie.diff = 2, 
+             B.both.diff = 2, 
+             B.untrained.diff = 2, 
+             t0.name = 2, 
+             t0.tie = 2, 
+             t0.both = 2,
+             t0.untrained = 2,
+             mean_v.name.true = 2, 
+             mean_v.tie.true = 2, 
+             mean_v.both.true = 2, 
+             mean_v.untrained.true = 2,
+             mean_v.name.false = 2, 
+             mean_v.tie.false = 2, 
+             mean_v.both.false = 2, 
+             mean_v.untrained.false = 2,
+             sd_v.true = 2) #
+pop.prior <- prior.p.dmc(
+  dists = rep("tnorm",22),
+  p1=pop.mean,p2=pop.scale,
+  lower=c(0,0,0,0,0,0,0,0,0,0.1,0.1,0.1,0.1,NA,NA,NA,NA,NA,NA,NA,NA,0),
+  upper=c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,1)
+)
+```
+
+Check the distributions
+
+```{r}
+par(mfcol=c(2,5)); for (i in names(pop.prior)) plot.prior(i,pop.prior)
+```
+
+# STEP 4: SAMPLING - FIT FIXED EFFECTS AND HIERARCHICAL #
+
+1) Specify the priors
+
+```{r}
+p.prior <- prior.p.dmc(
+  dists = rep("tnorm",22),
+  p1=pop.mean,p2=pop.scale,
+  lower=c(0,0,0,0,0,0,0,0,0,0.1,0.1,0.1,0.1,NA,NA,NA,NA,NA,NA,NA,NA,0),
+  upper=c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,1)
+)
+```
+
+2) Set up the sampling object called sKN
+
+```{r}
+sKN  <- h.samples.dmc(nmc = 120, p.prior, data.model)
+```
+
+## Automatic Script for sampling ##
+
+Fits fixed effects first and uses these as starting appoints for the full hierarchical model
+
+```{r}
+tmp=load("models/ea/modelKN.RData")
+cores=length(sKN)
+
+# Fixed effects, comment out on subsequent runs
+sKN <- h.RUN.dmc(sKN,cores=cores)
+save(dmKN,sKN,file="models/ea/donesmodelKN.RData")
+# Make hierarchical, comment out on subsequent runs
+p.prior <- sKN[[1]]$p.prior
+p1 <- get.p.vector(sKN[[1]])[names(p.prior)]
+s.prior <- prior.p.dmc(p1=p1,p2=p1,
+                       dists=rep("gamma",length(p1)))
+pp.prior=list(p.prior,s.prior)
+hstart <- make.hstart(sKN)
+theta1 <- make.theta1(sKN)
+hKN <- h.samples.dmc(nmc=100,p.prior,dmKN,pp.prior,
+                    hstart.prior=hstart,theta1=theta1,thin=10)
+rm(dmKN,sKN); gc()
+
+# Hierarhcial fit, comment out all but the next line on subsequent runs
+pp.prior <- attr(hKN,"hyper")$pp.prior
+hKN  <- h.run.unstuck.dmc(hKN, p.migrate = .05, cores = cores)
+save(hKN,file="models/ea/modelKN.RData")
+hKN <- h.run.converge.dmc(h.samples.dmc(nmc=100, samples=hKN),
+                      thorough=TRUE,nmc=50,cores=cores,finalrun=TRUE,finalI=250)
+save(hKN,file="models/ea/modelKN.RData")
+
+# Uncomment the following and make more copies to run more fits.
+# hX <- h.run.dmc(h.samples.dmc(samples=hX,nmc=250),cores=cores,report=10)
+# save(hX,file="models/ea/modelX.RData")
+
+
+# Make diagnostics, tweak layout as desired
+pdf("figures/ea/modelKN_chains.pdf",height=6,width = 8)
+plot.dmc(hKN,hyper=TRUE,pll.chain=TRUE) 
+plot.dmc(hKN,hyper=TRUE,layout=c(3,3))
+plot.dmc(hKN,hyper=TRUE,layout=c(4,4),p.prior=pp.prior)
+dev.off()
+
+ppKN <- h.post.predict.dmc(hKN)
+save(hKN,ppKN,file="models/ea/modelKN.RData")
+pdf("figures/ea/KN_fit.pdf",height=6, width=8)
+plot.pp.dmc(ppKN,model.legend = TRUE,layout=c(2,4))
+dev.off()
+
+h.IC.dmc(hKN,DIC=TRUE)
+
+gelman.diag.dmc(hKN,hyper=TRUE)
+gelman.diag.dmc(hKN)
+
+parsKN <- summary.dmc(hKN,hyper=TRUE) # Summary of the hyper posterior sample
+round(parsKN$quantiles[,c(1,3,5)],3)
+parsKN <- summary.dmc(hKN) # Summary of the posterior samples for each participant.
+save(hKN, ppKN, parsKN,file="models/ea/modelKN.RData")
+```
+
+
+# STEP 5: PARAMETER ESTIMATES #
+
+List of parameters since you will use these names in the parameter tests
+
+Parameter vector names are: ( see attr(,"p.vector") )
+ [1] "A"                      "B.name.same"            "B.tie.same"             "B.both.same"            "B.untrained.same"      
+ [6] "B.name.diff"            "B.tie.diff"             "B.both.diff"            "B.untrained.diff"       "t0.name"               
+[11] "t0.tie"                 "t0.both"                "t0.untrained"           "mean_v.name.true"       "mean_v.tie.true"       
+[16] "mean_v.both.true"       "mean_v.untrained.true"  "mean_v.name.false"      "mean_v.tie.false"       "mean_v.both.false"     
+[21] "mean_v.untrained.false" "sd_v.true"        
+
+Constants are (see attr(,"constants") ):
+sd_v.false        st0 
+         1          0 
+
+## DRIFT RATES ##
+
+Calculate subject average medians for drift rates for TRUE - FALSE drift rate
+
+```{r}
+fun <- function(x) {
+  c(diff(x[c("mean_v.name.false","mean_v.name.true")]),
+    diff(x[c("mean_v.tie.false","mean_v.tie.true")]),
+    diff(x[c("mean_v.both.false", "mean_v.both.true")]),
+    diff(x[c("mean_v.untrained.false", "mean_v.untrained.true")]))
+}
+
+pretty <-  c("name","tie", "both", "untrained") #Set the names
+
+ci.dv <- subject.average.ci(hKN,fun=fun,pretty=pretty)
+round(ci.dv,2)
+
+#       name  tie both untrained
+# 2.5%  2.01 2.13 2.74      1.85
+# 50%   2.30 2.39 3.12      2.08
+# 97.5% 2.60 2.67 3.53      2.31
+```
+
+Parameter test of difference
+
+```{r}
+#Compare training effects against untrained
+
+#Name vs. untrained
+fun <- function(x){
+  name <- diff(x[c("mean_v.name.false","mean_v.name.true")])            
+  untrained <- diff(x[c("mean_v.untrained.false","mean_v.untrained.true")])            
+  diff <- (untrained-name)
+  c(name,untrained,diff)
+}
+
+compare.p(hKN,show.plot=TRUE,pretty=c("name","untrained"),fun=fun,xlab="Average Rate")
+
+#        name untrained contrast
+# 2.5%  2.011     1.848   -0.596
+# 50%   2.296     2.076   -0.222
+# 97.5% 2.595     2.315    0.154
+# p.gt.0 
+#  0.126 
+
+#tie vs. untrained
+fun <- function(x){
+  tie <- diff(x[c("mean_v.tie.false","mean_v.tie.true")])            
+  untrained <- diff(x[c("mean_v.untrained.false","mean_v.untrained.true")])            
+  diff <- (untrained-tie)
+  c(tie,untrained,diff)
+}
+
+compare.p(hKN,show.plot=TRUE,pretty=c("tie","untrained"),fun=fun,xlab="Average Rate")
+
+#         tie untrained contrast
+# 2.5%  2.129     1.848   -0.671
+# 50%   2.390     2.076   -0.313
+# 97.5% 2.666     2.315    0.043
+# p.gt.0 
+#  0.042 
+
+#both vs. untrained
+fun <- function(x){
+  both <- diff(x[c("mean_v.both.false","mean_v.both.true")])            
+  untrained <- diff(x[c("mean_v.untrained.false","mean_v.untrained.true")])            
+  diff <- (untrained-both)
+  c(both,untrained,diff)
+}
+
+compare.p(hKN,show.plot=TRUE,pretty=c("both","untrained"),fun=fun,xlab="Average Rate")
+
+#        both untrained contrast
+# 2.5%  2.744     1.848   -1.511
+# 50%   3.122     2.076   -1.044
+# 97.5% 3.531     2.315   -0.606
+# p.gt.0 
+#      0 
+
+#both vs. name
+fun <- function(x){
+  both <- diff(x[c("mean_v.both.false","mean_v.both.true")])            
+  name <- diff(x[c("mean_v.name.false","mean_v.name.true")])            
+  diff <- (name-both)
+  c(both,name,diff)
+}
+
+compare.p(hKN,show.plot=TRUE,pretty=c("both","name"),fun=fun,xlab="Average Rate")
+
+#        both     name contrast
+# 2.5%  2.744     2.011   -1.322
+# 50%   3.122     2.296   -0.825
+# 97.5% 3.531     2.595   -0.327
+# p.gt.0 
+#  0.001 
+
+#both vs. tie
+fun <- function(x){
+  both <- diff(x[c("mean_v.both.false","mean_v.both.true")])            
+  tie <- diff(x[c("mean_v.tie.false","mean_v.tie.true")])            
+  diff <- (tie-both)
+  c(both,tie,diff)
+}
+
+compare.p(hKN,show.plot=TRUE,pretty=c("both","tie"),fun=fun,xlab="Average Rate")
+
+#        both   tie contrast
+# 2.5%  2.744 2.129   -1.204
+# 50%   3.122 2.390   -0.734
+# 97.5% 3.531 2.666   -0.262
+# p.gt.0 
+#  0.001 
+
+```
+
+## THRESHOLDS ##
+
+Thresholds
+
+ "B.name.same"            "B.tie.same"             "B.both.same"            "B.untrained.same"      
+ "B.name.diff"            "B.tie.diff"             "B.both.diff"            "B.untrained.diff" 
+
+Not interested in these differences but check anyway.
+Look at B for same v diff collapsing over training type
+```{r}
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  c(B.same <- (name.same+tie.same+both.same+untrained.same)/4,
+  B.diff <- (name.diff+tie.diff+both.diff+untrained.diff)/4)
+}
+
+
+pretty <-  c("B.same","B.diff") #Set the names
+
+ci.dv <- subject.average.ci(hKN,fun=fun,pretty=pretty)
+round(ci.dv,2)
+
+#       B.same B.diff
+# 2.5%    1.03   0.78
+# 50%     1.11   0.84
+# 97.5%   1.19   0.90
+
+#Parameter test to compare B for RJA vs. Con
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.same <- (name.same+tie.same+both.same+untrained.same)/4
+  B.diff <- (name.diff+tie.diff+both.diff+untrained.diff)/4
+  c(B.same, B.diff, B.same - B.diff)
+}
+compare.p(hKN,show.plot=TRUE,pretty=c("BSame","BDiff"),fun=fun,xlab="Threshold Same v Diff")
+
+#       BSame BDiff contrast
+# 2.5%  1.035 0.778    0.195
+# 50%   1.110 0.840    0.270
+# 97.5% 1.188 0.903    0.346
+# p.gt.0 
+#      1 
+```
+
+Check B collapsing across same and diff by training condition
+
+```{r}
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  c(B.name <- (name.same+name.diff)/2,
+  B.tie <- (tie.same+tie.diff)/2,
+  B.both <- (both.same+both.diff/2),
+  B.untrained <- (untrained.same+untrained.diff/2))
+}
+
+pretty <-  c("B.name","B.tie", "B.both", "B.untrained") #Set the names
+
+ci.dv <- subject.average.ci(hKN,fun=fun,pretty=pretty)
+round(ci.dv,2)
+
+#       B.name B.tie B.both B.untrained
+# 2.5%    0.64  0.57   0.84        2.60
+# 50%     0.76  0.68   1.01        2.80
+# 97.5%   0.88  0.79   1.19        3.03
+
+#Parameter Tests
+
+#Name vs. untrained
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.name <- (name.same+name.diff)/2
+  B.untrained <- (untrained.same+untrained.diff)/2
+  c(B.name, B.untrained, B.name - B.untrained)
+}
+compare.p(hKN,show.plot=TRUE,pretty=c("BName","BUntrained"),fun=fun,xlab="Threshold Name v Untrained")
+
+#       BName BUntrained contrast
+# 2.5%  0.635      1.702   -1.250
+# 50%   0.756      1.829   -1.075
+# 97.5% 0.880      1.970   -0.894
+# p.gt.0 
+#      0 
+
+#Tie vs. untrained
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.tie <- (tie.same+tie.diff)/2
+  B.untrained <- (untrained.same+untrained.diff)/2
+  c(B.tie, B.untrained, B.tie - B.untrained)
+}
+compare.p(hKN,show.plot=TRUE,pretty=c("BTie","BUntrained"),fun=fun,xlab="Threshold Tie v Untrained")
+
+#        BTie BUntrained contrast
+# 2.5%  0.573      1.702   -1.332
+# 50%   0.677      1.829   -1.150
+# 97.5% 0.787      1.970   -0.985
+# p.gt.0 
+#      0 
+
+#Both vs. untrained
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.both <- (both.same+both.diff/2)
+  B.untrained <- (untrained.same+untrained.diff)/2
+  c(B.both, B.untrained, B.both - B.untrained)
+}
+compare.p(hKN,show.plot=TRUE,pretty=c("BBoth","BUntrained"),fun=fun,xlab="Threshold Both v Untrained")
+
+#       BBoth BUntrained contrast
+# 2.5%  0.845      1.702   -1.041
+# 50%   1.012      1.829   -0.815
+# 97.5% 1.189      1.970   -0.595
+# p.gt.0 
+#      0 
+
+#Both vs. name
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.both <- (both.same+both.diff/2)
+  B.name <- (name.same+name.diff)/2
+  c(B.both, B.name, B.both - B.name)
+}
+compare.p(hKN,show.plot=TRUE,pretty=c("BBoth","BName"),fun=fun,xlab="Threshold Both v Name")
+
+#      BBoth BName contrast
+# 2.5%  0.845 0.635    0.042
+# 50%   1.012 0.756    0.256
+# 97.5% 1.189 0.880    0.477
+# p.gt.0 
+#   0.99 
+
+#Both vs. tie
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.both <- (both.same+both.diff/2)
+  B.tie <- (tie.same+tie.diff)/2
+  c(B.both, B.tie, B.both - B.tie)
+}
+compare.p(hKN,show.plot=TRUE,pretty=c("BBoth","BTie"),fun=fun,xlab="Threshold Both v Tie")
+
+#       BBoth  BTie contrast
+# 2.5%  0.845 0.573    0.136
+# 50%   1.012 0.677    0.335
+# 97.5% 1.189 0.787    0.538
+# p.gt.0 
+#      1 
+
+#Name v Tie
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.name <- (name.same+name.diff)/2
+  B.tie <- (tie.same+tie.diff)/2
+  c(B.name, B.tie, B.name - B.tie)
+}
+compare.p(hKN,show.plot=TRUE,pretty=c("Bname","BTie"),fun=fun,xlab="Threshold Name v Tie")
+
+#       Bname  BTie contrast
+# 2.5%  0.635 0.573   -0.087
+# 50%   0.756 0.677    0.079
+# 97.5% 0.880 0.787    0.240
+# p.gt.0 
+#  0.819 
+
+```
+
+Parameter test of difference
+"t0.name"               "t0.tie"                 "t0.both"                "t0.untrained"  
+
+```{r}
+#Compare validity effect at each level of congruency
+
+fun <- function(x){
+  name <- (x[c( "t0.name")])  
+  tie <- (x[c("t0.tie")])             
+  both <- (x[c("t0.both")])             
+  untrained <- (x[c("t0.untrained")])             
+  c(t0.name <- (name),
+  t0.tie <- (tie),
+  t0.both <- (both),
+  t0.untrained <- (untrained))
+}
+
+pretty <-  c("name","tie", "both", "untrained") #Set the names
+
+ci.dv <- subject.average.ci(hKN,fun=fun,pretty=pretty)
+round(ci.dv,2)
+
+#       name  tie both untrained
+# 2.5%  0.47 0.48 0.50      0.22
+# 50%   0.50 0.51 0.52      0.26
+# 97.5% 0.53 0.54 0.55      0.29
+
+
+#Parameter tests 
+# Name vs. untrained
+compare.p(hKN,show.plot=TRUE,pnames=c("t0.name","t0.untrained"),pretty=c("name","untrained"),xlab="Average t0")
+      
+#        name untrained contrast
+# 2.5%  0.469     0.222    0.194
+# 50%   0.501     0.258    0.243
+# 97.5% 0.533     0.295    0.291
+# p.gt.0 
+#      1 
+
+#Tie vs untrained
+compare.p(hKN,show.plot=TRUE,pnames=c("t0.tie","t0.untrained"),pretty=c("tie","untrained"),xlab="Average t0")
+#         tie untrained contrast
+# 2.5%  0.481     0.222    0.205
+# 50%   0.509     0.258    0.250
+# 97.5% 0.536     0.295    0.298
+# p.gt.0 
+#      1 
+     
+#Both vs. untrained
+compare.p(hKN,show.plot=TRUE,pnames=c("t0.both","t0.untrained"),pretty=c("both","untrained"),xlab="Average t0")
+
+#        both untrained contrast
+# 2.5%  0.495     0.222    0.219
+# 50%   0.524     0.258    0.266
+# 97.5% 0.553     0.295    0.314
+# p.gt.0 
+#      1 
+
+```
+

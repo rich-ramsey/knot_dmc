@@ -1,0 +1,777 @@
+---
+title: "effects_lba"
+author: "Sam & Rich"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file plots the posterior distributions for the LBA model results, including average estimates per training condition, as well as comparisons between training conditions.
+
+# load packages #
+
+Make sure the working directory is the top folder with the dmc and models folder
+
+```{r}
+source ("dmc/dmc.R")
+load_model ("LBA","lba_B.R") # LBA model with B=b-A parameterization 
+
+pkg <- c("tidyverse", "RColorBrewer", "patchwork", "tidybayes")
+
+lapply(pkg, library, character.only = TRUE)
+```
+
+# load the model #
+
+```{r}
+## The model object is available upon request
+## Please email Samantha Parker (samantha.parker@students.mq.edu.au) or Richard Ramsey (richard.ramsey@hest.ethz.ch)
+load("models/ea/modelKN.RData")
+```
+
+# set the grid for the multi-panel graph #
+
+```{r}
+design <- "
+  11234
+  11567
+"
+```
+
+# plot settings #
+
+theme settings for ggplot
+
+```{r, eval = F}
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 18, face = "bold"), 
+          title = element_text(size = 18, face = "bold"),
+          legend.position = "bottom")
+)
+
+## Set the amount of dodge in figures
+pd <- position_dodge(0.7)
+pd2 <- position_dodge(1)
+```
+
+# 1. DRIFT RATE COMPARISONS - FIGURE 2 #
+
+## calculate subject average medians for drift rates for TRUE - FALSE drift rate ##
+
+```{r}
+fun <- function(x){
+  name <- diff(x[c("mean_v.name.false","mean_v.name.true")])            
+  untrained <- diff(x[c("mean_v.untrained.false","mean_v.untrained.true")])            
+  diff <- (untrained-name)
+  c(name,untrained,diff)
+}
+
+knots.dv.1 <- compare.p(hKN,show.plot=TRUE,pretty=c("name","untrained"),
+                        fun=fun,xlab="Average Rate")
+knots.dv.1 <- as.data.frame(knots.dv.1)
+knots.dv.1_long <- gather(knots.dv.1, training, value, name:contrast,
+                          factor_key=TRUE)
+
+#Remove contrast condition
+knots.dv.1_long <- knots.dv.1_long %>% 
+  filter(!training =="contrast")
+
+#Do the same thing for tie and both
+fun <- function(x){
+  tie <- diff(x[c("mean_v.tie.false","mean_v.tie.true")])            
+  both <- diff(x[c("mean_v.both.false","mean_v.both.true")])            
+  diff <- (both-tie)
+  c(tie,both,diff)
+}
+
+knots.dv.2 <- compare.p(hKN,show.plot=TRUE,pretty=c("tie","both"),
+                        fun=fun,xlab="Average Rate")
+knots.dv.2 <- as.data.frame(knots.dv.2)
+knots.dv.2_long <- gather(knots.dv.2, training, value, tie:contrast, factor_key=TRUE)
+
+#Remove contrast condition
+knots.dv.2_long <- knots.dv.2_long %>% 
+  filter(!training =="contrast")
+
+#combine data frames
+dv.comb  <- rbind(knots.dv.1_long, knots.dv.2_long)
+dv.comb <- droplevels(dv.comb)
+
+#reorder the levels
+dv.comb$training <- factor(dv.comb$training, 
+                           levels = c("untrained", "name", "tie", "both"))
+```
+
+## FIGURE 2A ##
+
+Plot the drift rate difference by training condition 
+
+```{r}
+p1.1 <- ggplot(dv.comb, aes(x = value, fill=training, y = training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "darkgrey") +
+  labs(title = 'A',
+       x = "Drift Rate Difference", y = "Training Condition") +
+  scale_fill_brewer(palette = "Dark2") +
+  # scale_y_discrete(limits=rev) +
+  theme(legend.position="none")
+p1.1
+```
+
+## FIGURE 2B ##
+
+PAIRWISE COMPARISONS OF DRIFT RATE DIFFERENCE
+
+Compute the differences
+
+```{r}
+#Name vs. untrained
+fun <- function(x){
+  name <- diff(x[c("mean_v.name.false","mean_v.name.true")])            
+  untrained <- diff(x[c("mean_v.untrained.false","mean_v.untrained.true")])       
+  diff <- (name-untrained)
+  c(name,untrained,diff)
+}
+
+dr.1 <- compare.p(hKN,show.plot=TRUE,pretty=c("name","untrained"),
+                  fun=fun,xlab="Average Rate")
+dr.1 <- as.data.frame(dr.1)
+dr.1_long <- gather(dr.1, training, value, name:contrast, factor_key=TRUE)
+
+#Remove contrast condition
+dr.1_long <- dr.1_long %>% 
+  filter(training =="contrast")
+
+#tie vs. untrained
+fun <- function(x){
+  tie <- diff(x[c("mean_v.tie.false","mean_v.tie.true")])            
+  untrained <- diff(x[c("mean_v.untrained.false","mean_v.untrained.true")])     
+  diff <- (tie-untrained)
+  c(tie,untrained,diff)
+}
+
+dr.2 <- compare.p(hKN,show.plot=TRUE,pretty=c("tie","untrained"),
+                  fun=fun,xlab="Average Rate")
+dr.2 <- as.data.frame(dr.2)
+dr.2_long <- gather(dr.2, training, value, tie:contrast, factor_key=TRUE)
+dr.2_long <- dr.2_long %>% 
+  filter(training =="contrast")
+
+#both vs. untrained
+fun <- function(x){
+  both <- diff(x[c("mean_v.both.false","mean_v.both.true")])            
+  untrained <- diff(x[c("mean_v.untrained.false","mean_v.untrained.true")])       
+  diff <- (both-untrained)
+  c(both,untrained,diff)
+}
+
+dr.3 <- compare.p(hKN,show.plot=TRUE,pretty=c("both","untrained"),
+                  fun=fun,xlab="Average Rate")
+dr.3 <- as.data.frame(dr.3)
+dr.3_long <- gather(dr.3, training, value, both:contrast, factor_key=TRUE)
+dr.3_long <- dr.3_long %>% 
+  filter(training =="contrast")
+
+#both vs. name
+fun <- function(x){
+  both <- diff(x[c("mean_v.both.false","mean_v.both.true")])            
+  name <- diff(x[c("mean_v.name.false","mean_v.name.true")])            
+  diff <- (both-name)
+  c(both,name,diff)
+}
+
+dr.4 <- compare.p(hKN,show.plot=TRUE,pretty=c("both","name"),
+                  fun=fun,xlab="Average Rate")
+dr.4 <- as.data.frame(dr.4)
+dr.4_long <- gather(dr.4, training, value, both:contrast, factor_key=TRUE)
+dr.4_long <- dr.4_long %>% 
+  filter(training =="contrast")
+
+#both vs. tie
+fun <- function(x){
+  both <- diff(x[c("mean_v.both.false","mean_v.both.true")])            
+  tie <- diff(x[c("mean_v.tie.false","mean_v.tie.true")])            
+  diff <- (both-tie)
+  c(both,tie,diff)
+}
+
+dr.5 <- compare.p(hKN,show.plot=TRUE,pretty=c("both","tie"),
+                  fun=fun,xlab="Average Rate")
+dr.5 <- as.data.frame(dr.5)
+dr.5_long <- gather(dr.5, training, value, both:contrast, factor_key=TRUE)
+dr.5_long <- dr.5_long %>% 
+  filter(training =="contrast")
+
+#name vs. tie
+fun <- function(x){
+  name <- diff(x[c("mean_v.name.false","mean_v.name.true")])            
+  tie <- diff(x[c("mean_v.tie.false","mean_v.tie.true")])            
+  diff <- (name-tie)
+  c(name,tie,diff)
+}
+
+dr.6 <- compare.p(hKN,show.plot=TRUE,pretty=c("name","tie"),
+                  fun=fun,xlab="Average Rate")
+dr.6 <- as.data.frame(dr.6)
+dr.6_long <- gather(dr.6, training, value, name:contrast, factor_key=TRUE)
+dr.6_long <- dr.6_long %>% 
+  filter(training =="contrast")
+```
+
+Plot the pairwise comparisons
+
+```{r}
+p1.1.1 <- ggplot(dr.1_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = 'B',
+       x = "Name vs Untrained", y = "Density") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1,2), breaks = seq(-1,2,1))
+p1.1.1
+```
+
+```{r}
+p1.1.2 <- ggplot(dr.2_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .8, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = ' ',
+       x = "Tie vs Untrained", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1,2), breaks = seq(-1,2,1))
+p1.1.2
+```
+
+```{r}
+p1.1.3 <- ggplot(dr.3_long, aes(x = value, fill=training)) +
+     stat_halfeye(alpha = .7, .width = .95) +
+    geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = NULL,
+       x = "Both vs Untrained", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1,2), breaks = seq(-1,2,1))
+p1.1.3
+```
+
+```{r}
+p1.1.4 <- ggplot(dr.4_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = NULL,
+       x = "Both vs Name", y = "Density") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1,2), breaks = seq(-1,2,1))
+p1.1.4 
+```
+
+```{r}
+p1.1.5 <- ggplot(dr.5_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .8, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = NULL,
+       x = "Both vs Tie", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1,2), breaks = seq(-1,2,1))
+p1.1.5
+```
+
+```{r}
+p1.1.6 <- ggplot(dr.6_long, aes(x = value, fill=training)) +
+     stat_halfeye(alpha = .8, .width = .95) +
+    geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = NULL,
+       x = "Name vs Tie", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1,2), breaks = seq(-1,2,1))
+p1.1.6
+```
+
+Plot in multipanel
+
+```{r}
+p_drift <- p1.1 + p1.1.1 + p1.1.2 + p1.1.3 + p1.1.4 + p1.1.5 + p1.1.6 + 
+  plot_layout(design=design)
+p_drift
+
+ggsave("figures/ea/drift_rate.jpeg",
+       width = 14, height = 6, dpi = 800)
+```
+
+# 2. THRESHOLDS - FIGURE 3 #
+
+## calculate subject average medians ##
+
+```{r}
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.name <- (name.same+name.diff)/2
+  B.untrained <- (untrained.same+untrained.diff)/2
+  c(B.name, B.untrained, B.name - B.untrained)
+}
+
+knots.b.1 <- compare.p(hKN,show.plot=TRUE,pretty=c("name","untrained"),
+                 fun=fun,xlab="Threshold Name v Untrained")
+knots.b.1 <- as.data.frame(knots.b.1)
+knots.b.1_long <- gather(knots.b.1, training, value, name:contrast, factor_key=TRUE)
+
+#Remove contrast condition
+knots.b.1_long <- knots.b.1_long %>% 
+  filter(!training =="contrast")
+
+
+#Do the same for tie and both
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.both <- (both.same+both.diff/2)
+  B.tie <- (tie.same+tie.diff)/2
+  c(B.both, B.tie, B.both - B.tie)
+}
+knots.b.2 <- compare.p(hKN,show.plot=TRUE,pretty=c("both","tie"),
+                 fun=fun,xlab="Threshold Both v Tie")
+knots.b.2 <- as.data.frame(knots.b.2)
+knots.b.2_long <- gather(knots.b.2, training, value, both:contrast, factor_key=TRUE)
+
+#Remove contrast condition
+knots.b.2_long <- knots.b.2_long %>% 
+  filter(!training =="contrast")
+
+#combine data frames
+b.comb  <- rbind(knots.b.1_long, knots.b.2_long)
+b.comb <- droplevels(b.comb)
+
+#reorder the levels
+b.comb$training <- factor(b.comb$training, 
+                          levels = c("untrained", "name", "tie", "both"))
+```
+
+## FIGURE 3A ##
+
+plot thresholds
+
+```{r}
+p2.1 <- ggplot(b.comb, aes(x = value, fill=training, y = training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "darkgrey") +
+  labs(title = 'A',
+       x = "Threshold", y = "Training Condition") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position="none")
+p2.1
+```
+
+## FIGURE 3B ##
+
+PAIRWISE COMPARISONS - FIGURE 3B
+
+Compute the differences
+
+```{r}
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.name <- (name.same+name.diff)/2
+  B.untrained <- (untrained.same+untrained.diff)/2
+  c(B.name, B.untrained, B.name - B.untrained)
+}
+
+b.1 <- compare.p(hKN,show.plot=TRUE,pretty=c("name","untrained"),
+                 fun=fun,xlab="Threshold Name v Untrained")
+b.1 <- as.data.frame(b.1)
+b.1_long <- gather(b.1, training, value, name:contrast, factor_key=TRUE)
+b.1_long <- b.1_long %>% 
+  filter(training =="contrast")
+
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.tie <- (tie.same+tie.diff)/2
+  B.untrained <- (untrained.same+untrained.diff)/2
+  c(B.tie, B.untrained, B.tie - B.untrained)
+}
+
+b.2 <- compare.p(hKN,show.plot=TRUE,pretty=c("tie","untrained"),
+                 fun=fun,xlab="Threshold Tie v Untrained")
+b.2 <- as.data.frame(b.2)
+b.2_long <- gather(b.2, training, value, tie:contrast, factor_key=TRUE)
+b.2_long <- b.2_long %>% 
+  filter(training =="contrast")
+
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.both <- (both.same+both.diff)/2
+  B.untrained <- (untrained.same+untrained.diff)/2
+  c(B.both, B.untrained, B.both - B.untrained)
+}
+
+b.3 <- compare.p(hKN,show.plot=TRUE,pretty=c("both","untrained"),
+                 fun=fun,xlab="Threshold both v Untrained")
+b.3 <- as.data.frame(b.3)
+b.3_long <- gather(b.3, training, value, both:contrast, factor_key=TRUE)
+b.3_long <- b.3_long %>% 
+  filter(training =="contrast")
+
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.both <- (both.same+both.diff)/2
+  B.name <- (name.same+name.diff)/2
+  c(B.both, B.name, B.both - B.name)
+}
+
+b.4 <- compare.p(hKN,show.plot=TRUE,pretty=c("both","name"),
+                 fun=fun,xlab="Threshold both v name")
+b.4 <- as.data.frame(b.4)
+b.4_long <- gather(b.4, training, value, both:contrast, factor_key=TRUE)
+b.4_long <- b.4_long %>% 
+  filter(training =="contrast")
+
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.both <- (both.same+both.diff)/2
+  B.tie <- (tie.same+tie.diff)/2
+  c(B.both, B.tie, B.both - B.tie)
+}
+
+b.5 <- compare.p(hKN,show.plot=TRUE,pretty=c("both","tie"),
+                 fun=fun,xlab="Threshold both v tie")
+b.5 <- as.data.frame(b.5)
+b.5_long <- gather(b.5, training, value, both:contrast, factor_key=TRUE)
+b.5_long <- b.5_long %>% 
+  filter(training =="contrast")
+
+fun <- function(x){
+  name.same <- (x[c( "B.name.same")])  
+  tie.same <- (x[c("B.tie.same")])             
+  both.same <- (x[c("B.both.same")])             
+  untrained.same <- (x[c("B.untrained.same")])             
+  name.diff <- (x[c("B.name.diff")])    
+  tie.diff <- (x[c("B.tie.diff")]) 
+  both.diff <- (x[c("B.both.diff")])  
+  untrained.diff <- (x[c("B.untrained.diff")])             
+  B.name <- (name.same+name.diff)/2
+  B.tie <- (tie.same+tie.diff)/2
+  c(B.name, B.tie, B.name - B.tie)
+}
+
+b.6<- compare.p(hKN,show.plot=TRUE,pretty=c("name","tie"),
+                fun=fun,xlab="Threshold both v name")
+b.6<- as.data.frame(b.6)
+b.6_long <- gather(b.6, training, value, name:contrast, factor_key=TRUE)
+b.6_long <- b.6_long %>% 
+  filter(training =="contrast")
+```
+
+plot pairwise comparisons
+
+```{r}
+p2.1.1 <- ggplot(b.1_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = "B",
+       x = "Name vs Untrained", y = "Density") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1.5,0.5), breaks = seq(-1,0))
+p2.1.1
+```
+
+```{r}
+p2.1.2 <- ggplot(b.2_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Tie vs Untrained", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1.5,0.5), breaks = seq(-1,0))
+p2.1.2
+```
+
+```{r}
+p2.1.3 <- ggplot(b.3_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Both vs Untrained", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1.5,0.5), breaks = seq(-1,0))
+p2.1.3
+```
+
+```{r}
+p2.1.4 <- ggplot(b.4_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Both vs Name", y = "Density") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1.5,0.5), breaks = seq(-1,0))
+p2.1.4
+```
+
+```{r}
+p2.1.5 <- ggplot(b.5_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Both vs Tie", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1.5,0.5), breaks = seq(-1,0))
+p2.1.5
+```
+
+```{r}
+p2.1.6 <- ggplot(b.6_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Name vs Tie", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-1.5,0.5), breaks = seq(-1,0))
+p2.1.6
+```
+
+Plot together
+
+```{r}
+p_thresh <- p2.1 + p2.1.1 + p2.1.2 + p2.1.3 + p2.1.4 + p2.1.5 + p2.1.6 +
+  plot_layout(design=design)
+p_thresh
+
+ggsave("figures/ea/thresholds.jpeg",
+       width = 14, height = 6, dpi = 800)
+```
+
+# 3. NON-DECISION TIME - FIGURE 4 #
+
+## calculate subject average medians ##
+
+```{r}
+knots.t.1 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.name","t0.untrained"),
+                 pretty=c("name","untrained"),xlab="Average t0")
+knots.t.1 <- as.data.frame(knots.t.1)
+knots.t.1_long <- gather(knots.t.1, training, value, name:contrast, factor_key=TRUE)
+
+#Remove contrast condition
+knots.t.1_long <- knots.t.1_long %>% 
+  filter(!training =="contrast")
+
+#Do the same for both and tie
+knots.t.2 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.both","t0.tie"),
+                 pretty=c("both","tie"),xlab="Average t0")
+knots.t.2 <- as.data.frame(knots.t.2)
+knots.t.2_long <- gather(knots.t.2, training, value, both:contrast, factor_key=TRUE)
+
+#Remove contrast condition
+knots.t.2_long <- knots.t.2_long %>% 
+  filter(!training =="contrast")
+
+#combine data frames
+t.comb  <- rbind(knots.t.1_long, knots.t.2_long)
+t.comb <- droplevels(t.comb)
+
+#reorder the levels
+t.comb$training <- factor(t.comb$training, 
+                          levels = c("untrained", "name", "tie", "both"))
+```
+
+## FIGURE 4A ##
+
+NON-DECISION TIME BY TRAINING CONDITION 
+
+```{r}
+p3.1 <- ggplot(t.comb, aes(x = value, fill= training, y = training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "darkgrey",alpha = 5/10) +
+  labs(title = 'A',
+       x = "Non-decision Time", y = "Training Condition") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position="none")
+p3.1
+```
+
+## FIGURE 4B ##
+
+PAIRWISE COMPARISONS
+
+Compute the differences between each training condition
+
+```{r}
+t.1 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.name","t0.untrained"),
+                 pretty=c("name","untrained"),xlab="Average t0")
+t.1 <- as.data.frame(t.1)
+t.1_long <- gather(t.1, training, value, name:contrast, factor_key=TRUE)
+t.1_long <- t.1_long %>% 
+  filter(training =="contrast")
+
+t.2 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.tie","t0.untrained"),
+                 pretty=c("tie","untrained"),xlab="Average t0")
+t.2 <- as.data.frame(t.2)
+t.2_long <- gather(t.2, training, value, tie:contrast, factor_key=TRUE)
+t.2_long <- t.2_long %>% 
+  filter(training =="contrast")
+
+t.3 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.both","t0.untrained"),
+                 pretty=c("both","untrained"),xlab="Average t0")
+t.3 <- as.data.frame(t.3)
+t.3_long <- gather(t.3, training, value, both:contrast, factor_key=TRUE)
+t.3_long <- t.3_long %>% 
+  filter(training =="contrast")
+
+t.4 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.both","t0.name"),
+                 pretty=c("both","name"),xlab="Average t0")
+t.4 <- as.data.frame(t.4)
+t.4_long <- gather(t.4, training, value, both:contrast, factor_key=TRUE)
+t.4_long <- t.4_long %>% 
+  filter(training =="contrast")
+
+t.5 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.both","t0.tie"),
+                 pretty=c("both","tie"),xlab="Average t0")
+t.5 <- as.data.frame(t.5)
+t.5_long <- gather(t.5, training, value, both:contrast, factor_key=TRUE)
+t.5_long <- t.5_long %>% 
+  filter(training =="contrast")
+
+t.6 <- compare.p(hKN,show.plot=TRUE,pnames=c("t0.name","t0.tie"),
+                 pretty=c("name","tie"),xlab="Average t0")
+t.6 <- as.data.frame(t.6)
+t.6_long <- gather(t.6, training, value, name:contrast, factor_key=TRUE)
+t.6_long <- t.6_long %>% 
+  filter(training =="contrast")
+```
+
+plot pairwise comparisons
+
+```{r}
+p3.1.1 <- ggplot(t.1_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(title = 'B',
+       x = "Name vs Untrained", y = "Density") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-0.1,0.4), breaks = seq(0,0.4,0.2))
+p3.1.1
+```
+
+```{r}
+p3.1.2 <- ggplot(t.2_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Tie vs Untrained", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-0.1,0.4), breaks = seq(0,0.4,0.2))
+p3.1.2
+```
+
+```{r}
+p3.1.3 <- ggplot(t.3_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Both vs Untrained", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-0.1,0.4), breaks = seq(0,0.4,0.2))
+p3.1.3
+```
+
+```{r}
+p3.1.4 <- ggplot(t.4_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Both vs Name", y = "Density") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-0.1,0.4), breaks = seq(0,0.4,0.2))
+p3.1.4
+```
+
+```{r}
+p3.1.5 <- ggplot(t.5_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Both vs Tie", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-0.1,0.4), breaks = seq(0,0.4,0.2))
+p3.1.5
+```
+
+```{r}
+p3.1.6 <- ggplot(t.6_long, aes(x = value, fill=training)) +
+  stat_halfeye(alpha = .7, .width = .95) +
+  geom_vline(xintercept = 0, color = "red",alpha = 5/10) +
+  labs(x = "Name vs Tie", y = " ") +
+  scale_fill_manual(values = c("darkgrey")) +
+  theme(legend.position = "none") +
+  scale_x_continuous(limits=c(-0.1,0.4), breaks = seq(0,0.4,0.2))
+p3.1.6
+```
+
+Arrange together
+```{r}
+p_ndt <- p3.1 + p3.1.1 + p3.1.2 + p3.1.3 + p3.1.4 + p3.1.5 + p3.1.6 + 
+  plot_layout(design =design)
+p_ndt
+
+ggsave("figures/ea/ndt.jpeg",
+       width = 14, height = 6, dpi = 800)
+```
