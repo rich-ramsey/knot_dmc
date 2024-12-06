@@ -1,0 +1,286 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  man,floatsintext]{apa6}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+\ifLuaTeX
+\usepackage[bidi=basic]{babel}
+\else
+\usepackage[bidi=default]{babel}
+\fi
+\babelprovide[main,import]{english}
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+% Manuscript styling
+\usepackage{upgreek}
+\captionsetup{font=singlespacing,justification=justified}
+
+% Table formatting
+\usepackage{longtable}
+\usepackage{lscape}
+% \usepackage[counterclockwise]{rotating}   % Landscape page setup for large tables
+\usepackage{multirow}		% Table styling
+\usepackage{tabularx}		% Control Column width
+\usepackage[flushleft]{threeparttable}	% Allows for three part tables with a specified notes section
+\usepackage{threeparttablex}            % Lets threeparttable work with longtable
+
+% Create new environments so endfloat can handle them
+% \newenvironment{ltable}
+%   {\begin{landscape}\centering\begin{threeparttable}}
+%   {\end{threeparttable}\end{landscape}}
+\newenvironment{lltable}{\begin{landscape}\centering\begin{ThreePartTable}}{\end{ThreePartTable}\end{landscape}}
+
+% Enables adjusting longtable caption width to table width
+% Solution found at http://golatex.de/longtable-mit-caption-so-breit-wie-die-tabelle-t15767.html
+\makeatletter
+\newcommand\LastLTentrywidth{1em}
+\newlength\longtablewidth
+\setlength{\longtablewidth}{1in}
+\newcommand{\getlongtablewidth}{\begingroup \ifcsname LT@\roman{LT@tables}\endcsname \global\longtablewidth=0pt \renewcommand{\LT@entry}[2]{\global\advance\longtablewidth by ##2\relax\gdef\LastLTentrywidth{##2}}\@nameuse{LT@\roman{LT@tables}} \fi \endgroup}
+
+% \setlength{\parindent}{0.5in}
+% \setlength{\parskip}{0pt plus 0pt minus 0pt}
+
+% Overwrite redefinition of paragraph and subparagraph by the default LaTeX template
+% See https://github.com/crsh/papaja/issues/292
+\makeatletter
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\parindent}%
+  {0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+  {-1em}%
+  {\normalfont\normalsize\bfseries\itshape\typesectitle}}
+
+\renewcommand{\subparagraph}[1]{\@startsection{subparagraph}{5}{1em}%
+  {0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+  {-\z@\relax}%
+  {\normalfont\normalsize\itshape\hspace{\parindent}{#1}\textit{\addperi}}{\relax}}
+\makeatother
+
+\makeatletter
+\usepackage{etoolbox}
+\patchcmd{\maketitle}
+  {\section{\normalfont\normalsize\abstractname}}
+  {\section*{\normalfont\normalsize\abstractname}}
+  {}{\typeout{Failed to patch abstract.}}
+\patchcmd{\maketitle}
+  {\section{\protect\normalfont{\@title}}}
+  {\section*{\protect\normalfont{\@title}}}
+  {}{\typeout{Failed to patch title.}}
+\makeatother
+
+\usepackage{xpatch}
+\makeatletter
+\xapptocmd\appendix
+  {\xapptocmd\section
+    {\addcontentsline{toc}{section}{\appendixname\ifoneappendix\else~\theappendix\fi: #1}}
+    {}{\InnerPatchFailed}%
+  }
+{}{\PatchFailed}
+\makeatother
+\usepackage{lineno}
+
+\linenumbers
+\usepackage{csquotes}
+\raggedbottom
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdflang={en-EN},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{\phantom{0}}
+\date{}
+
+
+\shorttitle{Decision models and experience-dependent plasticity}
+
+\affiliation{\phantom{0}}
+
+\begin{document}
+
+\section{Supplementary Materials}\label{supplementary-materials}
+
+\subsection{Analysis of Observed Variables}\label{analysis-of-observed-variables}
+
+In addition to our evidence accumulation modelling analysis, we first analysed accuracy and reaction time (RT). Analyses was conducted using a Bayesian estimation approach to multilevel modelling (McElreath, 2020). Specifically, we used the Bayesian modelling package ``brms'' to run multilevel models in the R (Bürkner, 2017).
+
+Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (naming, tying, both, untrained). Shifted lognormal model was used to fit reaction time, while accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (see Table 1 for all priors used for modelling) (Gelman, 2006). The formula for the full model (Model 1) used to fit reaction time data is specified below:
+
+\[rt \sim 1 + training type + \\
+(1 + training type | pid), \\
+ndt \sim (1 | pid)\]
+
+Note: RT = reaction time (ms); training type = training condition (untrained vs.~naming vs.~tying vs.~both); pid = subject/participant identifier; ndt = non-decision time.
+
+The priors we used followed a weakly informative approach and are reported in Supplementary Table 1.
+
+
+
+
+
+\begin{table}[tbp]
+
+\begin{center}
+\begin{threeparttable}
+
+\caption{\label{tab:prior-table}Priors used for models.}
+
+\begin{tabular}{llll}
+\toprule
+Variable & \multicolumn{1}{c}{Prior} & \multicolumn{1}{c}{Class} & \multicolumn{1}{c}{dpar}\\
+\midrule
+Accuracy & normal (0,1) & Intercept & \\
+ & normal (0,.5) & sd & ndt\\
+ & normal (0,.5) & b & \\
+ & Lkj(2) & cor & \\
+Reaction time & normal (6.68,0.5) & Intercept & \\
+ & normal (5.99,0.5) & Intercept & ndt\\
+ & normal (0,.5) & b & \\
+ & normal (0,.5) & sd & \\
+ & normal (0,.5) & sd & ndt\\
+ & normal (0,.5) & sigma & \\
+ & Lkj(2) & cor & \\
+\bottomrule
+\addlinespace
+\end{tabular}
+
+\begin{tablenotes}[para]
+\normalsize{\textit{Note.} dpar = distributional parameter; sd = standard deviation; b = fixed effect; cor = correlation; ndt = nondecision time.}
+\end{tablenotes}
+
+\end{threeparttable}
+\end{center}
+
+\end{table}
+
+There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition accuracy was lower in both the tying and naming conditions, but slighly higher in the combined condition.
+
+There also appeared to be an effect of training type on RT (see Supplementary Figure 1B). Inspection of the posterior distribution for the fixed effects of training type revealed values which primarily fell below zero. This suggests that relative to knots that received no training, participants responded faster to knots that received naming, tying and both naming and tying training.
+
+
+
+\begin{figure}[H]
+
+{\centering \includegraphics[height=0.67\textheight,]{../../figures/manifest/fixef} 
+
+}
+
+\caption{Fixed Effects for the Most Complex Model for (A) Accuracy and (B) Reaction Time. Points represent the median value of the posterior distribution for that estimate, the thicker line represents 66th percentile, while the thinner line is the 95th percentile of the distribution. The untrained condition was the reference group.}\label{fig:fixef-plot}
+\end{figure}
+
+\subsection{LBA Analysis}\label{lba-analysis}
+
+\subsubsection{Sampling}\label{sampling}
+
+For each model we used three times as many chains were used as model parameters. Sampling was carried out in two steps. First, sampling was carried out separately for individual participants in order to get reasonable start points for hierarchical sampling. The results of this step were then used as starting points for sampling the full hierarchical sample. During the initial burn-in-period there was a probability of .05 that a crossover step was replaced with a migration step. After burn in only crossover steps were used and sampling continued until the proportional scale reduction factor (\(\hat{R}\)) was less than 1.1 for all parameters, and also the multivariate version was less than 1.1 (Brooks \& Gelman, 1998). Hierarchical estimation assumed independent normal population distributions for each model parameter. Population-mean start points were calculated from the mean of the individual-subject posterior medians and population standard deviation from their standard deviations, with each chain getting a slightly different random perturbation of these values. Hierarchical sampling used probability .05 migration steps at both levels of the hierarchy during burn in and only crossover steps thereafter with thinning set at 10 (i.e., only every 10th sample was kept), with sampling continuing until \(\hat{R}\) for all parameters at all levels, and the multivariate \(\hat{R}\) values, were all less than 1.1. The final set of chains were also inspected visually to confirm convergence.
+
+\subsubsection{Priors}\label{priors}
+
+Priors were chosen to have little influence on estimation. Priors were normal distributions that were truncated below zero for B, A and sv parameters, and truncated at 0.1s for the t0 parameter (assuming that responses made in less than 0.1s are implausible). The t0 parameter was truncated above by 1s. There were no other truncations, so the v prior was unbounded. The prior mean for B was 1 and for A 0.5. The v parameter for the true accumulator was given a prior mean of 1, while the mismatching accumulator was given a prior mean of 0. The sv parameter for the matching accumulator had a prior mean of 0.5. The t0 parameter had a prior mean of 0.3s. All priors had a standard deviation of 2. Mean parameters of population distributions were assumed to have priors of the same form as for individual estimation, and the standard deviations of hyper parameters were assumed to have exponential distributions with a scale parameter of one. Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 2 for an example of how the priors were updated for hyperparameters).
+
+
+
+\begin{figure}[H]
+
+{\centering \includegraphics[height=0.67\textheight,]{../../figures/ea/pp} 
+
+}
+
+\caption{Prior and Posterior Graphs. Red lines represent priors, while black lines represent posteriors. Only a selection of all the parameters are shown here.}\label{fig:prior-post-plot}
+\end{figure}
+
+\subsubsection{Model fit}\label{model-fit}
+
+Supplementary Figures 3 display the fits of the LBA model to the data in terms of defective cumulative distribution functions (lines) and 10th, 30th, 50th, 70th and 90th percentiles (points from left to right) averaged over participants. Thick black lines and open points correspond to the data and the think grey lines solid black points to the model prediction averaged over posterior samples. The grey points correspond to percentile predictions for 100 randomly selected sets of posterior parameter samples, so their spread gives an idea of the uncertainty in the model's predictions. As can be seen from the figure the average fit of the selected LBA model was reasonable.
+
+
+
+\begin{figure}[H]
+
+{\centering \includegraphics[height=0.67\textheight,]{../../figures/ea/KN_fit} 
+
+}
+
+\caption{Cumulative distribution functions for data (thick lines) and fits (line grey lines) of the LBA model. Each panel contains results for both same and different responses at each level of stimulus (match and mismatch) and training type (name, tie, both, untrained). Symbols mark the 10th, 30th, 50th, 70th and 90th percentile (solid for average fits, open for data). Grey points are 500 percentile estimates from fits for random draws from posterior samples; the grey line and black solid points are the average of these 500 fits.}\label{fig:model-fit-plot}
+\end{figure}
+
+
+\end{document}
