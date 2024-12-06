@@ -290,7 +290,7 @@ sKN  <- h.samples.dmc(nmc = 120, p.prior, data.model)
 Fits fixed effects first and uses these as starting appoints for the full hierarchical model
 
 ```{r}
-tmp=load("models/ea/modelKN.RData")
+tmp=load("models/ea/dmKN.RData")
 cores=length(sKN)
 
 # Fixed effects, comment out on subsequent runs
@@ -325,7 +325,7 @@ save(hKN,file="models/ea/modelKN.RData")
 pdf("figures/ea/modelKN_chains.pdf",height=6,width = 8)
 plot.dmc(hKN,hyper=TRUE,pll.chain=TRUE) 
 plot.dmc(hKN,hyper=TRUE,layout=c(3,3))
-plot.dmc(hKN,hyper=TRUE,layout=c(4,4),p.prior=pp.prior)
+plot.dmc(hKN,hyper=TRUE,layout=c(3,3),p.prior=pp.prior)
 dev.off()
 
 ppKN <- h.post.predict.dmc(hKN)
