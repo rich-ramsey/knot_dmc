@@ -88,8 +88,8 @@ knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
 ## theme settings for ggplot
 theme_set(
   theme_bw() +
-    theme(text = element_text(size = 18), 
-          title = element_text(size = 18),
+    theme(text = element_text(size = 18, face = "bold"), 
+          title = element_text(size = 18, face = "bold"),
           legend.position = "bottom")
 )
 
