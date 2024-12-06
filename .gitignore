@@ -6,7 +6,7 @@
 /tutorial
 /sandpit
 /models
-*modelKN.RData
 /data
-*wrangle_raw.Rmd
 preprint/
+supplementary/
+*wrangle_raw.Rmd
