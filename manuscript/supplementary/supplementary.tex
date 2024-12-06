@@ -182,15 +182,13 @@
 
 In addition to our evidence accumulation modelling analysis, we first analysed accuracy and reaction time (RT). Analyses was conducted using a Bayesian estimation approach to multilevel modelling (McElreath, 2020). Specifically, we used the Bayesian modelling package ``brms'' to run multilevel models in the R (Bürkner, 2017).
 
-Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (naming, tying, both, untrained). Shifted lognormal model was used to fit reaction time, while accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (see Table 1 for all priors used for modelling) (Gelman, 2006). The formula for the full model (Model 1) used to fit reaction time data is specified below:
+Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (naming, tying, both, untrained). Shifted lognormal model was used to fit reaction time, while accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (see Supplementary Table 1 for all priors used for modelling) (Gelman, 2006). The formula for the full model (Model 1) used to fit reaction time data is specified below:
 
 \[rt \sim 1 + training type + \\
 (1 + training type | pid), \\
 ndt \sim (1 | pid)\]
 
 Note: RT = reaction time (ms); training type = training condition (untrained vs.~naming vs.~tying vs.~both); pid = subject/participant identifier; ndt = non-decision time.
-
-The priors we used followed a weakly informative approach and are reported in Supplementary Table 1.
 
 
 
