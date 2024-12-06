@@ -22,7 +22,7 @@ This file focusses on the effects from reaction time and accuracy models.
 ```{r load-pkg}
 pkg <- c("tidyverse", "RColorBrewer", "patchwork", "brms", "tidybayes", 
          "ggdist", "future", "bayesplot", "parallel", "here", "tinytable",
-         "webshot2")
+         "webshot2", "rstan")
 
 lapply(pkg, library, character.only = TRUE)
 ```
@@ -149,12 +149,25 @@ p_tidy_fixed <- ggplot(tidy_fixed, aes(x = value, y = fct_rev(term),
                                        fill=term)) +  
   geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
   stat_halfeye(alpha=0.7) +
-  labs(title = "fixed effects of condition",
+  labs(#title = "fixed effects of condition",
        x = "Log(RT)", y = NULL) +
   scale_fill_brewer(palette = "Dark2")
 p_tidy_fixed
 
-ggsave ("figures/manifest/b1_fixef.jpeg")
+# ggsave ("figures/manifest/b1_fixef.jpeg",
+#         width = 8, height = 6, dpi = 800)
+```
+
+### make a table of fixed effects ###
+
+```{r}
+b1_fixef_tab <- tidy_fixed %>%
+  select(term, value) %>% 
+  group_by(term) %>% 
+  median_qi(value) %>% 
+  mutate(dv = "reaction time") %>% 
+  select(dv, term, value, .lower, .upper) 
+b1_fixef_tab
 ```
 
 ### visualise varying effects ###
@@ -193,7 +206,8 @@ p_tidy_varying_pid <- ggplot(tidy_varying, aes(x = value, y = fct_rev(term))) +
   scale_x_continuous(breaks=seq(0,1,0.1))
 p_tidy_varying_pid
 
-ggsave ("figures/manifest/b1_varying_pid.jpeg")
+ggsave ("figures/manifest/b1_varying_pid.jpeg",
+        width = 8, height = 6, dpi = 800)
 ```
 
 ### visualise variance within group levels ###
@@ -243,7 +257,8 @@ p_tidy_varyvals <- ggplot(vary_pt, aes(x=rank, y=Estimate,
   theme(legend.position = "none")
 p_tidy_varyvals
 
-ggsave ("figures/manifest/b1_varyvals.jpeg")
+ggsave ("figures/manifest/b1_varyvals.jpeg",
+        width = 8, height = 6, dpi = 800)
 ```
 
 ## 1.3 plot in the original metric as a function of conditions ##
@@ -339,36 +354,36 @@ head(data_acc)
 using posterior_samples and tidybayes
 
 ```{r}
-post <- as_draws_df(ab1) %>% #
+ab1_post <- as_draws_df(ab1) %>% #
   select(-lp__) %>% 
   as_tibble()
 
-post_summary <- posterior_summary(ab1, robust = TRUE)
+ab1_post_summary <- posterior_summary(ab1, robust = TRUE)
 
 # all fixed effects
-post_qi_b <- post %>%
+ab1_post_qi_b <- ab1_post %>%
   select(starts_with("b_")) %>% 
   pivot_longer(everything()) %>% 
   group_by(name) %>% 
   median_qi(value)
-head(post_qi_b)
+head(ab1_post_qi_b)
 
 # average varying effects - SD
-post_qi_sd <- post %>%
+ab1_post_qi_sd <- ab1_post %>%
   select(starts_with("sd_")) %>% 
   pivot_longer(everything()) %>% 
   group_by(name) %>% 
   median_qi(value)
-head(post_qi_sd)
+head(ab1_post_qi_sd)
 
 # varying effects by participant 
 # I take this to be 18 pts x 4 terms (intercept, 3 levels of group) = 72 in total
-vary_vals <- post %>%
+ab1_vary_vals <- ab1_post %>%
   select(starts_with("r_")) %>% 
   pivot_longer(everything()) %>% 
   group_by(name) %>% 
   median_qi(value)
-head(vary_vals)
+head(ab1_vary_vals)
 ```
 
 ### visualise fixed effects ###
@@ -378,7 +393,7 @@ Using posterior_samples and tidybayes
 ```{r}
 ## fixed effects of interest, excluding basic intercepts 
 ## Is this the right way to label the interaction?
-tidy_fixed <- post %>% 
+ab1_tidy_fixed <- ab1_post %>% 
   select(starts_with("b_")) %>% # select and rename in simpler labels.
   pivot_longer(everything()) %>% # move from wide to long
   mutate(key = factor(name, levels=unique(name)),
@@ -386,35 +401,48 @@ tidy_fixed <- post %>%
                 if_else(str_detect(name, "tie"), "tie",
                 if_else(str_detect(name, "both"), "both", "intercept"))),
          term = factor(term, levels=unique(term)))
-head(tidy_fixed)
-tail(tidy_fixed)
+head(ab1_tidy_fixed)
+tail(ab1_tidy_fixed)
 
 ## check labels
-check.labels <- tidy_fixed %>% 
+check.labels <- ab1_tidy_fixed %>% 
   group_by(key, term) %>% 
   distinct(key, term)
 check.labels
 
 # remove intercepts as they are on a different scale and make it difficult to plot
-tidy_fixed <- tidy_fixed %>%
+ab1_tidy_fixed <- ab1_tidy_fixed %>%
   filter(!term %in% c("intercept"))
-head(tidy_fixed)
+head(ab1_tidy_fixed)
 
-check.labels <- tidy_fixed %>% 
+check.labels <- ab1_tidy_fixed %>% 
   group_by(key, term) %>% 
   distinct(key, term)
 check.labels
 
-p_tidy_fixed <- ggplot(tidy_fixed, aes(x = value, y = fct_rev(term), 
+p_tidy_fixed_ab1 <- ggplot(ab1_tidy_fixed, aes(x = value, y = fct_rev(term), 
                                        fill=term)) +  
   geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
   stat_halfeye(alpha=0.7) +
-  labs(title = "fixed effects of condition",
+  labs(#title = "fixed effects of condition",
        x = "Accuracy", y = NULL) +
   scale_fill_brewer(palette = "Dark2")
-p_tidy_fixed
+p_tidy_fixed_ab1
 
-ggsave ("figures/manifest/ab1_fixef.jpeg")
+# ggsave ("figures/manifest/ab1_fixef.jpeg",
+#         width = 8, height = 6, dpi = 800)
+```
+
+### make a table of fixed effects ###
+
+```{r}
+ab1_fixef_tab <- ab1_tidy_fixed %>%
+  select(term, value) %>% 
+  group_by(term) %>% 
+  median_qi(value) %>% 
+  mutate(dv = "accuracy") %>% 
+  select(dv, term, value, .lower, .upper) 
+ab1_fixef_tab
 ```
 
 ### visualise varying effects ###
@@ -425,7 +453,7 @@ variance at the group level (i.e., intercepts and effects across participants)
 
 ```{r}
 ## random effects of interest, including item, as well as participant and effects across pts
-tidy_varying <- post %>% 
+ab1_tidy_varying <- ab1_post %>% 
   select(contains("sd_")) %>% 
   pivot_longer(everything()) %>% 
   mutate(key = factor(name, levels=unique(name)),
@@ -434,16 +462,16 @@ tidy_varying <- post %>%
                 if_else(str_detect(name, "both"), "both", "intercept"))),
          term = factor(term, levels=c("intercept",
                                       "name", "tie", "both")))
-head(tidy_varying)
-tail(tidy_varying)
-str(tidy_varying)
+head(ab1_tidy_varying)
+tail(ab1_tidy_varying)
+str(ab1_tidy_varying)
 
-check.varying <- tidy_varying %>% 
+check.varying <- ab1_tidy_varying %>% 
   group_by(key, term) %>% 
   distinct(key, term)
 check.varying
 
-p_tidy_varying_pid <- ggplot(tidy_varying, aes(x = value, 
+p_tidy_varying_pid_ab1 <- ggplot(ab1_tidy_varying, aes(x = value, 
                                                y = fct_rev(term))) +  
   geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
   stat_halfeye(alpha = 0.7) +
@@ -451,9 +479,10 @@ p_tidy_varying_pid <- ggplot(tidy_varying, aes(x = value,
        x = NULL, y = NULL) +
   coord_cartesian(xlim =c(0, 1))+
   scale_x_continuous(breaks=seq(0,1,0.1))
-p_tidy_varying_pid
+p_tidy_varying_pid_ab1
 
-ggsave ("figures/manifest/ab1_varying_pid.jpeg")
+ggsave ("figures/manifest/ab1_varying_pid.jpeg",
+        width = 8, height = 6, dpi = 800)
 ```
 
 ### visualise variance within group levels ###
@@ -469,7 +498,7 @@ use output from posterior summary and wrangle
 # mutate here to create factors to preserve order of term - useful when plotting. Also create a new outlier variable and factor it. You could do the outlier variable in one step possibly using as_factor, but this does the job.
 
 # participant level
-vary_pt <- post_summary %>%
+ab1_vary_pt <- ab1_post_summary %>%
   data.frame() %>% 
   rownames_to_column("param") %>% 
   filter(str_detect(param, "r_PID"),
@@ -483,7 +512,7 @@ vary_pt <- post_summary %>%
   mutate(rank = rep(1:18, times=4),
          outlier = if_else(Q2.5 > 0 | Q97.5 < 0, "yes", "no"), 
          outlier = factor(outlier, levels = c("no", "yes")))
-head(vary_pt)
+head(ab1_vary_pt)
 ```
 
 plot varying effects via caterpillar plots
@@ -491,7 +520,7 @@ plot varying effects via caterpillar plots
 variation by participant
 
 ```{r}
-p_tidy_varyvals <- ggplot(vary_pt, aes(x=rank, y=Estimate,
+p_tidy_varyvals_ab1 <- ggplot(ab1_vary_pt, aes(x=rank, y=Estimate,
                                            colour=outlier))+
   geom_pointrange(aes(ymin=Q2.5,ymax=Q97.5),fatten = 0.5)+
   geom_hline(yintercept=0, colour = "red")+
@@ -500,9 +529,10 @@ p_tidy_varyvals <- ggplot(vary_pt, aes(x=rank, y=Estimate,
        x = "participant id")+
   facet_wrap(~term) +
   theme(legend.position = "none")
-p_tidy_varyvals
+p_tidy_varyvals_ab1
 
-ggsave ("figures/manifest/ab1_varyvals.jpeg")
+ggsave ("figures/manifest/ab1_varyvals.jpeg",
+        width = 8, height = 6, dpi = 800)
 ```
 
 ## 2.3 plot in the original metric as a function of conditions ##
@@ -571,7 +601,23 @@ save_tt(tt_acc_tab, here("tables/manifest", "ab1_ppreds_acc.png"),
 ```
 
 
-# 3. plot ppreds for RT and Accuracy together #
+# 3. make plots for RT and Accuracy together #
+
+fixed effects
+
+```{r}
+p_fixef <- (p_tidy_fixed_ab1 | p_tidy_fixed) +
+  plot_annotation(title = "Fixed effects of condition for accuracy and RT",
+                  tag_levels = 'A') +
+  plot_layout(guides = 'collect',
+              axes = 'collect')
+p_fixef
+
+ggsave("figures/manifest/fixef.jpeg",
+       width = 10, height = 6, dpi = 800)
+```
+
+posterior predictions
 
 ```{r}
 p_ppreds <- (p_ppreds_acc | p_ppreds_rt) +
@@ -581,5 +627,15 @@ p_ppreds
 
 ggsave("figures/manifest/ppreds.jpeg",
        width = 10, height = 6, dpi = 800)
+```
+
+# 4. make a table of fixed effects for rt and accuracy #
+
+```{r}
+fix_tab <- bind_rows(ab1_fixef_tab, b1_fixef_tab) %>% 
+   mutate(across(where(is.double), \(x) round(x, 2)))
+fix_tab
+
+write_csv(fix_tab, "tables/manifest/fixef.csv")
 ```
 
