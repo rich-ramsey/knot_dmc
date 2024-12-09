@@ -97,6 +97,8 @@ This is where the tables are stored.
 This is where the manuscript .Rmd file and .pdf files are stored, along with the .bib files that contain references. 
 For more information on using papaja() for manuscripts, see the [papaja manual](https://frederikaust.com/papaja_man/)
 
+The /supplementary/ subfolder contains the corresponding .Rmd and .pdf files for supplementary materials.
+
 **/packages/**
 
 Information on installing R packages is stored in this folder.
