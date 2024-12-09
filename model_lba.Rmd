@@ -325,7 +325,7 @@ save(hKN,file="models/ea/modelKN.RData")
 pdf("figures/ea/modelKN_chains.pdf",height=6,width = 8)
 plot.dmc(hKN,hyper=TRUE,pll.chain=TRUE) 
 plot.dmc(hKN,hyper=TRUE,layout=c(3,3))
-plot.dmc(hKN,hyper=TRUE,layout=c(3,3),p.prior=pp.prior)
+plot.dmc(hKN,hyper=TRUE,layout=c(4,4),p.prior=pp.prior)
 dev.off()
 
 ppKN <- h.post.predict.dmc(hKN)
