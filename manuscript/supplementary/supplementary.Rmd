@@ -48,29 +48,24 @@ knitr::opts_chunk$set(fig.pos='H', out.extra = '', out.height = "67%",
                       fig.align = "center") # initial version
 ```
 
-```{r papaja-terms-settings}
-# supp_terms <- getOption("papaja.terms")
-# supp_terms$table <- "Supplementary Table"
-# supp_terms$figure <- "Supplementary Figure"
-# options("papaja.terms" = supp_terms) 
-```
+<!-- the below two lines directly change the default Figure and Table naming to Supplementary -->
+<!-- see here for more details - https://stackoverflow.com/questions/47173279/internationalization-r-knitr-figure-caption-label -->
 
+\renewcommand{\figurename}{Supplementary Figure}
+\renewcommand{\tablename}{Supplemetentary Table}
 
-# Supplementary Materials #
+# Supplementary Materials
 
-## Analysis of Observed Variables ##
+## Analysis of Observed Variables
 
-In addition to our evidence accumulation modelling analysis, we first analysed accuracy and reaction time (RT). Analyses was conducted using a Bayesian estimation approach to multilevel modelling (McElreath, 2020). Specifically, we used the Bayesian modelling package “brms” to run multilevel models in the R (Bürkner, 2017).
+In addition to our evidence accumulation modelling analysis, we also analysed accuracy and reaction time (RT) data separately using multi-level regression. To do so, we used a Bayesian estimation approach to regression (McElreath, 2020). Specifically, we used the R package “brms” to build multi-level regression models (Bürkner, 2017).
 
-Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (naming, tying, both, untrained). Shifted lognormal model was used to fit reaction time, while accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (see Supplementary Table 1 for all priors used for modelling) (Gelman, 2006). The formula for the full model (Model 1) used to fit reaction time data is specified below:
-
-$$rt \sim 1 + training type + \\
+Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (untrained, name, tie, both). A shifted lognormal model was used to fit reaction time data, whereas accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (Gelman, 2006). Supplementary Table 1 provides details of the priors used in these models. The formulas for the full models (Model 1) used to fit reaction time and accuracy data are specified below: $$rt \sim 1 + training type + \\
 (1 + training type | pid), \\
-ndt \sim (1 | pid)$$
+ndt \sim (1 | pid)$$ $$acc \sim 1 + training type + \\
+(1 + training type | pid)$$ *Note:* RT = reaction time (ms); acc= accuracy (0,1); training type = training condition (untrained vs. naming vs. tying vs. both); pid = subject/participant identifier; ndt = non-decision time.
 
-Note: RT = reaction time (ms); training type = training condition (untrained vs. naming vs. tying vs. both); pid = subject/participant identifier; ndt = non-decision time.
-
-(ref:prior-table-caption) Priors used for models.
+(ref:prior-table-caption) Priors used for the separate analysis of RT and accuracy data.
 
 (ref:prior-table-note) dpar = distributional parameter; sd = standard deviation; b = fixed effect; cor = correlation; ndt = nondecision time.
 
@@ -101,25 +96,53 @@ apa_table(
 )
 ```
 
-There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition accuracy was lower in both the tying and naming conditions, but slighly higher in the combined condition.
+\newpage
 
-There also appeared to be an effect of training type on RT (see Supplementary Figure 1B). Inspection of the posterior distribution for the fixed effects of training type revealed values which primarily fell below zero. This suggests that relative to knots that received no training, participants responded faster to knots that received naming, tying and both naming and tying training.
-	
-(ref:fixef-caption) Fixed Effects for the Most Complex Model for (A) Accuracy and (B) Reaction Time. Points represent the median value of the posterior distribution for that estimate, the thicker line represents 66th percentile, while the thinner line is the 95th percentile of the distribution. The untrained condition was the reference group.
+There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition, accuracy was lower in both the tying and naming conditions, but slighly higher in the combined condition.
+
+There also appeared to be relatively small effects of training type on RT (see Supplementary Figure 1B). Inspection of the posterior distribution for the fixed effects of training type revealed values which primarily fell below zero. This suggests that relative to knots that received no training, participants responded faster to knots that received naming, tying and both naming and tying training.
+
+(ref:fixef-caption) Fixed Effects for the Most Complex Model for (A) Accuracy and (B) Reaction Time. Points represent the median value of the posterior distribution for that estimate, the thicker line represents 66th percentile, while the thinner line is the 95th percentile of the distribution. The untrained condition was the reference group in these regression models.
 
 ```{r fixef-plot, fig.cap = "(ref:fixef-caption)"}
 knitr::include_graphics("../../figures/manifest/fixef.jpeg")
 ```
 
-## LBA Analysis ##
+## LBA Analysis
 
-### Sampling ###
+### Sampling
 
-For each model we used three times as many chains were used as model parameters. Sampling was carried out in two steps. First, sampling was carried out separately for individual participants in order to get reasonable start points for hierarchical sampling. The results of this step were then used as starting points for sampling the full hierarchical sample. During the initial burn-in-period there was a probability of .05 that a crossover step was replaced with a migration step. After burn in only crossover steps were used and sampling continued until the proportional scale reduction factor ($\hat{R}$) was less than 1.1 for all parameters, and also the multivariate version was less than 1.1 (Brooks & Gelman, 1998). Hierarchical estimation assumed independent normal population distributions for each model parameter. Population-mean start points were calculated from the mean of the individual-subject posterior medians and population standard deviation from their standard deviations, with each chain getting a slightly different random perturbation of these values. Hierarchical sampling used probability .05 migration steps at both levels of the hierarchy during burn in and only crossover steps thereafter with thinning set at 10 (i.e., only every 10th sample was kept), with sampling continuing until $\hat{R}$ for all parameters at all levels, and the multivariate $\hat{R}$ values, were all less than 1.1. The final set of chains were also inspected visually to confirm convergence.
+As much as possible, we used settings that were recommended for hierarchical sampling by the authors of the DMC software (Heathcote et al., 2019). Sampling was carried out in two steps. First, sampling was carried out separately for individual participants in order to get reasonable start points for hierarchical sampling. The results of this step were then used as starting points for sampling the full hierarchical sample. During the initial burn-in-period there was a probability of .05 that a crossover step was replaced with a migration step. After burn-in only crossover steps were used and sampling continued until the proportional scale reduction factor ($\hat{R}$) was less than 1.1 for all parameters, and also the multivariate version was less than 1.1 (Brooks & Gelman, 1998). Hierarchical estimation assumed independent normal population distributions for each model parameter. Population-mean start points were calculated from the mean of the individual-subject posterior medians and population standard deviation from their standard deviations, with each chain getting a slightly different random perturbation of these values. Hierarchical sampling used probability .05 migration steps at both levels of the hierarchy during burn in and only crossover steps thereafter with thinning set at 10 (i.e., only every 10th sample was kept), with sampling continuing until $\hat{R}$ for all parameters at all levels, and the multivariate $\hat{R}$ values, were all less than 1.1. The final set of chains were also inspected visually to confirm convergence. For each model we used three times as many chains as model parameters.
 
-### Priors ###
+### Priors
 
-Priors were chosen to have little influence on estimation. Priors were normal distributions that were truncated below zero for B, A and sv parameters, and truncated at 0.1s for the t0 parameter (assuming that responses made in less than 0.1s are implausible). The t0 parameter was truncated above by 1s. There were no other truncations, so the v prior was unbounded. The prior mean for B was 1 and for A 0.5. The v parameter for the true accumulator was given a prior mean of 1, while the mismatching accumulator was given a prior mean of 0. The sv parameter for the matching accumulator had a prior mean of 0.5. The t0 parameter had a prior mean of 0.3s. All priors had a standard deviation of 2. Mean parameters of population distributions were assumed to have priors of the same form as for individual estimation, and the standard deviations of hyper parameters were assumed to have exponential distributions with a scale parameter of one. Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 2 for an example of how the priors were updated for hyperparameters).
+Priors were chosen to have little influence on estimation. Priors were normal distributions that were truncated below zero for B, A and sv parameters, and truncated at 0.1s for the t0 parameter (assuming that responses made in less than 0.1s are implausible). The t0 parameter was truncated above by 1s. There were no other truncations, so the v prior was unbounded. The prior mean for B was 1 and for A 0.5. The v parameter for the true accumulator was given a prior mean of 1, while the mismatching accumulator was given a prior mean of 0. The sv parameter for the matching accumulator had a prior mean of 0.5. The t0 parameter had a prior mean of 0.2s. All priors had a standard deviation of 2. Mean parameters of population distributions were assumed to have priors of the same form as for individual estimation, and the standard deviations of hyper parameters were assumed to have exponential distributions with a scale parameter of one.
+
+(ref:prior-lba-table-caption) Priors used for the LBA analysis.
+
+(ref:prior-lba-table-note) A = start point; B = threshold; mean_v_true = mean drift rate for correct responses; mean_v_false = mean drift rate for incorrect responses; sd_v_true = standard deviation of the mean drift rate for correct responses; SD = standard deviation; lb = lower bound; ub = upper bound. Two variables were given constant values to enable model fitting and these were set as follows: sd_v_false = 1, st0 = 0.
+
+```{r prior-lba-table}
+prior_lba_table <- tibble(
+  parameter = c("A", "B", "t0", "mean_v_true", "mean_v_false", "sd_v_true", "sd_v_false", "st0"),
+  mean = c(1, .5, .2, 1, 0, .5, 1, 0),
+  sd = c(rep(2, times = 6), NA, NA),
+  lb = c(0, 0, 0.1, NA, NA, NA, NA, NA),
+  ub = c(NA, NA, 1, NA, NA, NA, NA, NA)
+) %>%
+  mutate(across(everything(), ~as.character(.x))) %>% 
+  mutate(across(everything(), ~replace_na(.x, "-")))
+
+apa_table(
+  prior_lba_table,
+  caption = "(ref:prior-lba-table-caption)",
+  note = "(ref:prior-lba-table-note)"
+) 
+```
+
+\newpage
+
+Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 2).
 
 (ref:prior-post-caption) Prior and Posterior Graphs. Red lines represent priors, while black lines represent posteriors. Only a selection of all the parameters are shown here.
 
@@ -127,11 +150,11 @@ Priors were chosen to have little influence on estimation. Priors were normal di
 knitr::include_graphics("../../figures/ea/pp.pdf")
 ```
 
-### Model fit ###
+### Model fit
 
-Supplementary Figures 3 display the fits of the LBA model to the data in terms of defective cumulative distribution functions (lines) and 10th, 30th, 50th, 70th and 90th percentiles (points from left to right) averaged over participants. Thick black lines and open points correspond to the data and the think grey lines solid black points to the model prediction averaged over posterior samples. The grey points correspond to percentile predictions for 100 randomly selected sets of posterior parameter samples, so their spread gives an idea of the uncertainty in the model’s predictions. As can be seen from the figure the average fit of the selected LBA model was reasonable.
+Supplementary Figures 3 displays the fits of the LBA model to the data in terms of defective cumulative distribution functions (lines) and 10th, 30th, 50th, 70th and 90th percentiles (points from left to right) averaged over participants. Thick black lines and open points correspond to the data and the thin grey lines and solid black points correspond to the model predictions averaged over posterior samples. The grey points correspond to percentile predictions for 100 randomly selected sets of posterior parameter samples, so their spread gives an idea of the uncertainty in the model’s predictions. As can be seen from the Supplementary Figure 3, the average fit of the selected LBA model was reasonable.
 
-(ref:model-fit-caption) Cumulative distribution functions for data (thick lines) and fits (line grey lines) of the LBA model. Each panel contains results for both same and different responses at each level of stimulus (match and mismatch) and training type (name, tie, both, untrained). Symbols mark the 10th, 30th, 50th, 70th and 90th percentile (solid for average fits, open for data). Grey points are 500 percentile estimates from fits for random draws from posterior samples; the grey line and black solid points are the average of these 500 fits.
+(ref:model-fit-caption) Cumulative distribution functions for data (thick lines) and fits (line grey lines) of the LBA model. Each panel contains results for both same and different responses at each level of stimulus (match and mismatch) and training type (untrained, name, tie, both). Symbols mark the 10th, 30th, 50th, 70th and 90th percentile (solid for average fits, open for data). Grey points are 500 percentile estimates from fits for random draws from posterior samples; the grey line and black solid points are the average of these 500 fits.
 
 ```{r model-fit-plot, fig.cap = "(ref:model-fit-caption)"}
 knitr::include_graphics("../../figures/ea/KN_fit.pdf")
