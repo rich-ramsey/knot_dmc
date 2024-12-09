@@ -49,6 +49,7 @@ knitr::opts_chunk$set(fig.pos='H', out.extra = '', out.height = "67%",
 ```
 
 <!-- the below two lines directly change the default Figure and Table naming to Supplementary -->
+
 <!-- see here for more details - https://stackoverflow.com/questions/47173279/internationalization-r-knitr-figure-caption-label -->
 
 \renewcommand{\figurename}{Supplementary Figure}
@@ -60,10 +61,13 @@ knitr::opts_chunk$set(fig.pos='H', out.extra = '', out.height = "67%",
 
 In addition to our evidence accumulation modelling analysis, we also analysed accuracy and reaction time (RT) data separately using multi-level regression. To do so, we used a Bayesian estimation approach to regression (McElreath, 2020). Specifically, we used the R package “brms” to build multi-level regression models (Bürkner, 2017).
 
-Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (untrained, name, tie, both). A shifted lognormal model was used to fit reaction time data, whereas accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (Gelman, 2006). Supplementary Table 1 provides details of the priors used in these models. The formulas for the full models (Model 1) used to fit reaction time and accuracy data are specified below: $$rt \sim 1 + training type + \\
+Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (untrained, name, tie, both). A shifted lognormal model was used to fit reaction time data, whereas accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (Gelman, 2006). Supplementary Table 1 provides details of the priors used in these models. The formulas for the full models (Model 1) used to fit reaction time and accuracy data are specified below: 
+$$rt \sim 1 + training type + \\
 (1 + training type | pid), \\
-ndt \sim (1 | pid)$$ $$acc \sim 1 + training type + \\
-(1 + training type | pid)$$ *Note:* RT = reaction time (ms); acc= accuracy (0,1); training type = training condition (untrained vs. naming vs. tying vs. both); pid = subject/participant identifier; ndt = non-decision time.
+ndt \sim (1 | pid)$$ 
+$$acc \sim 1 + training type + \\
+(1 + training type | pid)$$ 
+*Note:* RT = reaction time (ms); acc= accuracy (0,1); training type = training condition (untrained vs. naming vs. tying vs. both); pid = subject/participant identifier; ndt = non-decision time.
 
 (ref:prior-table-caption) Priors used for the separate analysis of RT and accuracy data.
 
