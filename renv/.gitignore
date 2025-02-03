@@ -1,5 +1,5 @@
 library/
-local/
+# local/
 cellar/
 lock/
 python/
