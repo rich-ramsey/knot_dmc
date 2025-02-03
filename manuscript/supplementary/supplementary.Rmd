@@ -112,6 +112,19 @@ There also appeared to be relatively small effects of training type on RT (see S
 knitr::include_graphics("../../figures/manifest/fixef.jpeg")
 ```
 
+### Day 1, Session 1 Data ###
+
+We also visually checked for any clear and obvious differences between training conditions that could have existed before any training had occurred (see Supplementary Figure 2). 
+In other words, we checked for random pre-training differences in RT and accuracy that might have existed in the Day 1, Session 1 data.
+
+(ref:day1-caption) Accuracy and Reaction Time by Training Type for the Day 1 and Session 1 data (i.e., before any training had occurred). (A) Percent correct on the perceptual discrimination task by training type. (B) Mean reaction time (ms) on the perceptual discrimination task by training type. Black points denote group means, while error bars represent within subjects’ standard errors of the mean. Grey points denote individual subject means.
+
+```{r day1-plot, fig.cap = "(ref:day1-caption)"}
+knitr::include_graphics("../../figures/descriptive/day1_session1_violin_acc_rt.jpeg")
+```
+
+At least in terms of accuracy and RT when analysed separately, there appears to be no clear and obvious pre-training differences between the conditions. Moreover, for RTs, any small numerical differences between conditions are in the opposite direction to the effect of training that we observed in RT, which is that trained conditions became faster than the untrained condition. Therefore, it seems unlikely that pre-existing, chance differences between conditions could account for our findings.
+
 ## LBA Analysis
 
 ### Sampling
@@ -146,7 +159,7 @@ apa_table(
 
 \newpage
 
-Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 2).
+Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 3).
 
 (ref:prior-post-caption) Prior and Posterior Graphs. Red lines represent priors, while black lines represent posteriors. Only a selection of all the parameters are shown here.
 
@@ -156,7 +169,7 @@ knitr::include_graphics("../../figures/ea/pp.pdf")
 
 ### Model fit
 
-Supplementary Figures 3 displays the fits of the LBA model to the data in terms of defective cumulative distribution functions (lines) and 10th, 30th, 50th, 70th and 90th percentiles (points from left to right) averaged over participants. Thick black lines and open points correspond to the data and the thin grey lines and solid black points correspond to the model predictions averaged over posterior samples. The grey points correspond to percentile predictions for 100 randomly selected sets of posterior parameter samples, so their spread gives an idea of the uncertainty in the model’s predictions. As can be seen from the Supplementary Figure 3, the average fit of the selected LBA model was reasonable.
+Supplementary Figures 4 displays the fits of the LBA model to the data in terms of defective cumulative distribution functions (lines) and 10th, 30th, 50th, 70th and 90th percentiles (points from left to right) averaged over participants. Thick black lines and open points correspond to the data and the thin grey lines and solid black points correspond to the model predictions averaged over posterior samples. The grey points correspond to percentile predictions for 100 randomly selected sets of posterior parameter samples, so their spread gives an idea of the uncertainty in the model’s predictions. As can be seen from the Supplementary Figure 4, the average fit of the selected LBA model was reasonable.
 
 (ref:model-fit-caption) Cumulative distribution functions for data (thick lines) and fits (line grey lines) of the LBA model. Each panel contains results for both same and different responses at each level of stimulus (match and mismatch) and training type (untrained, name, tie, both). Symbols mark the 10th, 30th, 50th, 70th and 90th percentile (solid for average fits, open for data). Grey points are 500 percentile estimates from fits for random draws from posterior samples; the grey line and black solid points are the average of these 500 fits.
 
