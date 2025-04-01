@@ -22,6 +22,7 @@ author:
   - name          : "Richard Ramsey"
     affiliation   : "2"
     corresponding : yes    # Define only one corresponding author
+    address       : "ETH Zurich"
     email         : "richard.ramsey@hest.ethz.ch"
     role:
       - "Conceptualization"
