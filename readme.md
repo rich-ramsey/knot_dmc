@@ -76,6 +76,8 @@ At the top level of the folder, there are several files.
 
 **wrangle.Rmd**. This file wrangles the data, makes summary plots and writes out data for subsequent analyses.
 
+**sim_data.Rmd**. This file takes fitted regression models from the manifest analysis and uses them to simulate RT and accuracy data that has similar properties to the real data.
+
 - There is one renv.lock file
 
 **renv.lock**. renv() produces a plain text file that records all package versions.
@@ -112,6 +114,8 @@ In various folders, there are subfolders, which denote:
 **/manifest/**. manifest analyses of rt and accuracy separately
 
 **/descriptive/**. descriptive plots of rt and accuracy.
+
+**/simulated/**. simulated data and plots.
 
 
 # How do I use the files? #
