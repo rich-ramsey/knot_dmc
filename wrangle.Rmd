@@ -46,11 +46,16 @@ source("custom_functions/wrangle_plot.R")
 
 # 1. load the data #
 
-this is the processed data for day 5 session 2
+this is the processed data for day 1 session 1 and day 5 session 2
 
 ```{r}
-raw <- read_csv("data/processed/day5_post_knots_data.csv")
-head(raw)
+## day 1 data
+day1_raw <- read_csv("data/processed/day1_pre_knots_data.csv")
+head(day1_raw)
+
+## day 5 data
+day5_raw <- read_csv("data/processed/day5_post_knots_data.csv")
+head(day5_raw)
 ```
 
 And this is the simulated data for code checking purposes, as the raw data cannot be made publicly available. 
@@ -59,14 +64,27 @@ See the sim_data.Rmd script for details on how the data were simulated.
 Note - the simulated data resemble the real data, but they will of course produce DIFFERENT results.
  
 ```{r}
-# raw <- read_csv("data/simulated/sim_raw.csv")
-# head(raw)
+## day 1 simulated data
+# day1_raw <- read_csv("data/simulated/day1_sim_raw.csv")
+# head(day1_raw)
+
+## day 5 simulated data
+# day5_raw <- read_csv("data/simulated/day5_sim_raw.csv")
+# head(day5_raw)
+```
+
+combine the day 1 and day 5 data
+
+```{r}
+raw <- bind_rows(day1_raw, day5_raw)
+head(raw)
+glimpse(raw)
 ```
 
 do some checks 
 
 ```{r}
-## only day 5, session 2
+## only day 1, session and day 5, session 2
 raw %>%
   distinct(DAY, SESSION)
 
@@ -84,18 +102,23 @@ create factors.
 
 ```{r}
 data <- raw %>%
-  select(PID, GROUP, MATCH, RESPONSE, RT) %>%
-  mutate(ACC = if_else(MATCH == RESPONSE, 1, 0)) %>%
+  select(PID, DAY, SESSION, GROUP, MATCH, RESPONSE, RT)  |>  
+  mutate(ACC = if_else(MATCH == RESPONSE, 1, 0))  |> 
   mutate(
+    DAY = case_when(
+      DAY == 1 ~ "Day 1",
+      .default = "Day 5"
+    ),
     GROUP = case_when(
       GROUP == 1 ~ "name",
       GROUP == 2 ~ "tie",
       GROUP == 3 ~ "both",
       .default = "untrained"
     )
-  ) %>%
+  )  |> 
   mutate(
     PID = factor(PID),
+    DAY = factor(DAY),
     GROUP = factor(GROUP, levels = c("untrained", "name", "tie", "both"))
   )
 head(data)
@@ -105,6 +128,8 @@ glimpse(data)
 ```{r}
 # Relevant variables as follows:
 # PID = ID each participants should be n = 18 (with day 5, session 2 data)
+# DAY = day 1 or day 5
+# SESSION = session 1 or session 2
 # RESPONSE = Whether the participant selects a match or not? (1 = match, 2 = mismatch)
 # RT = Response times in ms
 # GROUP = 1-4 (name, tie, both, untrained)
@@ -126,7 +151,7 @@ trial count per PID
 
 ```{r}
 trials_pid <- data %>%
-  group_by(PID) %>%
+  group_by(PID, DAY) %>%
   tally() %>% 
   arrange(n) # take a look at the lowest trial count
 head(trials_pid)
@@ -136,7 +161,7 @@ per condition
 
 ```{r}
 trials_cond <- data %>%
-  group_by(GROUP) %>%
+  group_by(DAY, GROUP) %>%
   tally() %>% 
   arrange(n) # take a look at the lowest trial count
 head(trials_cond)
@@ -146,7 +171,7 @@ per PID and condition
 
 ```{r}
 trials_pid_cond <- data %>%
-  group_by(PID, GROUP) %>%
+  group_by(PID, DAY, GROUP) %>%
   tally() %>% 
   arrange(n) 
 head(trials_pid_cond)
@@ -167,7 +192,7 @@ trials_pid_cond %>%
 acc_ind <- summarise_individual(
   data,
   id_var = PID,
-  group_vars = "GROUP",
+  group_vars = c("DAY", "GROUP"),
   response_var = ACC,
   scale = 100
 )
@@ -176,7 +201,7 @@ acc_ind
 acc_group <- summarise_group(
   data,
   id_var = PID,
-  group_vars = "GROUP",
+  group_vars = c("DAY", "GROUP"),
   response_var = ACC,
   scale = 100
 )
@@ -189,7 +214,7 @@ acc_group
 rt_ind <- summarise_individual(
   data_rt,
   id_var = PID,
-  group_vars = "GROUP",
+  group_vars = c("DAY", "GROUP"),
   response_var = RT
 )
 rt_ind
@@ -197,10 +222,21 @@ rt_ind
 rt_group <- summarise_group(
   data_rt,
   id_var = PID,
-  group_vars = "GROUP",
+  group_vars = c("DAY", "GROUP"),
   response_var = RT
 )
 rt_group
+```
+
+## wrangle grop-level summary data for supplementary materials ##
+
+```{r}
+acc_rt_group <- bind_rows(acc_group, rt_group) |> 
+  mutate(variable = rep(c("Accuracy (% correct)", "Reaction time (ms)" ), each = 8)) |> 
+  clean_names() |> 
+  rename(condition = group, mean = mean_val, sem = sem_val) |> 
+  select(variable, day, condition, mean, sem)
+acc_rt_group  
 ```
 
 # 5. make some plots #
@@ -210,257 +246,63 @@ rt_group
 plot accuracy
 
 ```{r}
-p5.4 <- plot_rain(
+p5.1 <- plot_rain(
   acc_ind,
   acc_group,
   x_var = "GROUP",
   y_var = "mean_val",
+  facet_var = "DAY",
   x_label = "Training Condition",
   y_label = "Percentage Correct",
   point_spread = .1
 )
-p5.4
+p5.1
 ```
 
 plot rt
 
 ```{r}
-p5.5 <- plot_rain(
+p5.2 <- plot_rain(
   rt_ind,
   rt_group,
   x_var = "GROUP",
   y_var = "mean_val",
+  facet_var = "DAY",
   x_label = "Training Condition",
   y_label = "Mean Reaction Time (ms)",
   point_spread = .1
 )
-p5.5
+p5.2
 ```
 
 plot together
 
 ```{r}
-p5.6 <- (p5.4 | p5.5) +
+p5.3 <- (p5.1 / p5.2) +
   plot_annotation(tag_levels = 'A') +
   plot_layout(axes = "collect")
-p5.6
+p5.3
 
 ggsave("figures/descriptive/rain_acc_rt.jpeg",
-       width = 10, height = 6, dpi = 800)
-```
-
-# 6. day 1 vs day 5 data #
-
-Compare the day 1 summary data with the day 5 summary data
-
-## read in the day 1 data ##
-
-```{r}
-## read in
-day1_raw <- read_csv("data/processed/day1_pre_knots_data.csv")
-head(day1_raw)
-```
-
-do some checks 
-
-```{r}
-## only day 1, session 1
-day1_raw %>%
-  distinct(DAY, SESSION) 
-
-## 18 PIDs, PID 3 and 17 are not included
-day1_raw %>% 
-  distinct(PID)
-```
-
-## wrangle the day 1 data ##
-
-```{r}
-## wrangle
-day1_acc_rt <- day1_raw |>
-  select(PID, DAY, SESSION, GROUP, MATCH, RESPONSE, RT) |>
-  mutate(ACC = if_else(MATCH == RESPONSE, 1, 0)) |>
-  mutate(
-    DAY = case_when(
-      DAY == 1 ~ "Day 1",
-      .default = "Day 5"
-    ),
-    GROUP = case_when(
-      GROUP == 1 ~ "name",
-      GROUP == 2 ~ "tie",
-      GROUP == 3 ~ "both",
-      .default = "untrained"
-    )
-  )
-head(day1_acc_rt)
-glimpse(day1_acc_rt)
-
-## create rt data
-day1_rt <- day1_acc_rt %>% 
-  filter(ACC==1)
-head(day1_rt)
-glimpse(day1_rt)
-
-## check PIDs
-day1_acc_rt |>  
-  distinct(PID)
-```
-
-## join day 1 and day 5 data ##
-
-accuracy
-
-```{r}
-day1v5_data <- data |>
-  add_column(DAY = "Day 5", SESSION = 2) |>
-  select(PID, DAY, SESSION, everything()) |>
-  mutate(PID=as.numeric(as.character(PID))) |>
-  bind_rows(day1_acc_rt) |>
-  mutate(
-    PID = factor(PID),
-    DAY = factor(DAY),
-    GROUP = factor(GROUP, levels = c("untrained", "name", "tie", "both"))
-  )
-head(day1v5_data)
-glimpse(day1v5_data)
-summary(day1v5_data)
-
-## check PIDs
-day1v5_data |>  
-  distinct(PID)
-```
-
-rt
-
-```{r}
-day1v5_data_rt <- day1v5_data |> 
-  filter(ACC==1)
-head(day1v5_data_rt)
-glimpse(day1v5_data_rt)
-```
-
-## create summary data ##
-
-accuracy 
-
-```{r}
-day1v5_acc_ind <- summarise_individual(
-  day1v5_data,
-  id_var = PID,
-  group_vars = c("DAY", "GROUP"),
-  response_var = ACC,
-  scale = 100
-)
-day1v5_acc_ind
-
-day1v5_acc_group <- summarise_group(
-  day1v5_data,
-  id_var = PID,
-  group_vars = c("DAY", "GROUP"),
-  response_var = ACC,
-  scale = 100
-)
-day1v5_acc_group
-```
-
-rt
-
-```{r}
-day1v5_rt_ind <- summarise_individual(
-  day1v5_data_rt,
-  id_var = PID,
-  group_vars = c("DAY", "GROUP"),
-  response_var = RT
-)
-day1v5_rt_ind
-
-day1v5_rt_group <- summarise_group(
-  day1v5_data_rt,
-  id_var = PID,
-  group_vars = c("DAY", "GROUP"),
-  response_var = RT
-)
-day1v5_rt_group
-```
-
-plot accuracy
-
-```{r}
-p6.1 <- plot_rain(
-  day1v5_acc_ind,
-  day1v5_acc_group,
-  x_var = "GROUP",
-  y_var = "mean_val",
-  facet_var = "DAY",
-  x_label = "Training Condition",
-  y_label = "Percentage Correct",
-  point_spread = .1
-) 
-p6.1
-```
-
-plot rt
-
-```{r}
-p6.2 <- plot_rain(
-  day1v5_rt_ind,
-  day1v5_rt_group,
-  x_var = "GROUP",
-  y_var = "mean_val",
-  facet_var = "DAY",
-  x_label = "Training Condition",
-  y_label = "Mean Reaction Time (ms)",
-  point_spread = .1
-)
-p6.2
-```
-
-plot together
-
-```{r}
-p6.3 <- (p6.1 / p6.2) +
-  plot_annotation(tag_levels = 'A') +
-  plot_layout(axes = "collect")
-p6.3
-
-ggsave("figures/descriptive/day1v5_rain_acc_rt.jpeg",
        width = 10, height = 10, dpi = 800)
 ```
 
-## wrangle grop-level summary data for supplementary materials ##
+# 6. write out the data #
 
-```{r}
-day1v5_group <- bind_rows(day1v5_acc_group, day1v5_rt_group) |> 
-  mutate(variable = rep(c("Accuracy (% correct)", "Reaction time (ms)" ), each = 8)) |> 
-  clean_names() |> 
-  rename(condition = group, mean = mean_val, sem = sem_val) |> 
-  select(variable, day, condition, mean, sem)
-day1v5_group  
-```
+## day 1 vs 5 data for plotting and modelling via brms ##
 
-# 7. write out the data #
-
-## day 5 data for plotting and modelling via brms ##
-
-this is the data for acc and rt labelled as it is in plots
-It can be used for modelling in the manifest analysis of rt and acc separately
+This is the data for acc and rt labelled as it is in plots.
+It can be used for modelling in the manifest analysis of rt and acc separately.
 
 ```{r}
 write_csv(data, "data/processed/data_acc.csv")
 write_csv(data_rt, "data/processed/data_rt.csv")
 ```
 
-## day 1 vs 5 data for plotting and modelling via brms ##
+## day 1 vs 5 group-level summary data for supplementary materials ##
 
 ```{r}
-write_csv(day1v5_data, "data/processed/day1v5_data_acc.csv")
-write_csv(day1v5_data_rt, "data/processed/day1v5_data_rt.csv")
-```
-
-## day 1 vs 5 group-level summary data for supplementary tables ##
-
-```{r}
-write_csv(day1v5_group, "data/processed/data1v5_group.csv")
+write_csv(acc_rt_group, "tables/manifest/descriptives.csv")
 ```
 
 ## data for use in LBA modelling ##
@@ -477,15 +319,19 @@ Rules for data to be used in dmc
 
 And we can remove the ACC column as DMC makes the match between Stimulus and Response.
 
+### day 1, session 1 ###
+
 ```{r}
-data_lba <- data %>%
-  rename(s = PID, S = MATCH, R = RESPONSE) %>% 
+day1_data_lba <- data  |> 
+  filter(DAY == "Day 1") |> 
+  select(-DAY) |> 
+  rename(s = PID, S = MATCH, R = RESPONSE)  |>  
   mutate(RT = RT/1000,
          S = factor(S),
-         R = factor(R)) %>%
-  select(s, GROUP, S, R, RT) %>% 
+         R = factor(R))  |> 
+  select(s, GROUP, S, R, RT) |> 
   as.data.frame()
-head(data_lba)
+head(day1_data_lba)
   
 ## technically, since we are saving out a .csv file then reading it in when we get to the model script the factors and data frame (vs tibble) are not necessary here as they will need to be re-done when they are read in later. But I think it is probably good practice to get this in the format that is later required.
 ```
@@ -493,6 +339,29 @@ head(data_lba)
 save it as a .csv file
 
 ```{r}
-write_csv(data_lba, "data/processed/data_lba.csv")
+write_csv(day1_data_lba, "data/processed/day1_data_lba.csv")
+```
+
+### day 5, session 2 ###
+
+```{r}
+day5_data_lba <- data  |> 
+  filter(DAY == "Day 5") |> 
+  select(-DAY) |> 
+  rename(s = PID, S = MATCH, R = RESPONSE)  |>  
+  mutate(RT = RT/1000,
+         S = factor(S),
+         R = factor(R))  |> 
+  select(s, GROUP, S, R, RT) |> 
+  as.data.frame()
+head(day5_data_lba)
+  
+## technically, since we are saving out a .csv file then reading it in when we get to the model script the factors and data frame (vs tibble) are not necessary here as they will need to be re-done when they are read in later. But I think it is probably good practice to get this in the format that is later required.
+```
+
+save it as a .csv file
+
+```{r}
+write_csv(day5_data_lba, "data/processed/day5_data_lba.csv")
 ```
 

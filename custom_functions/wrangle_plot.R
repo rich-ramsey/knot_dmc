@@ -286,8 +286,6 @@ plot_rain <- function(
   return(p)
 }
 # Create an LBA schematic plot - single panel with two accumulators
-library(tidyverse)
-
 # Single panel with two accumulators
 create_lba_schematic <- function() {
   # Set common end time (both arrows end at same x position)
@@ -365,6 +363,159 @@ create_lba_schematic <- function() {
       plot.margin = margin(0, 0, 0, 0)
     )
 }
-
 # Create the plot
-create_lba_schematic()
+#create_lba_schematic()
+
+#' Plot Hierarchical Parameters with Prior Overlays (ggplot2 version)
+#'
+#' Creates density plots comparing posterior distributions to prior distributions
+#' for hierarchical model parameters using ggplot2. Returns a list of two plots:
+#' one for location (h1) parameters and one for scale (h2) parameters.
+#'
+#' @param samples A DMC samples object containing hierarchical parameter estimates
+#' @param p.prior A list of length 2 containing prior specifications. First element
+#'   contains location parameter priors, second element contains scale parameter priors
+#' @param nrow Number of rows in facet layout. Default is 4
+#' @param ncol Number of columns in facet layout. Default is 4
+#' @param start Integer specifying the starting iteration to include. Default is 1
+#' @param end Integer specifying the ending iteration to include. If NA, uses all
+#'   available iterations. Default is NA
+#' @param post.col Color for posterior density lines. Default is "black"
+#' @param prior.col Color for prior density lines. Default is "red"
+#' @param post.lwd Line width for posterior density. Default is 1
+#' @param prior.lwd Line width for prior density. Default is 1
+#' @param add.legend Logical indicating whether to add a legend. Default is TRUE
+#' @param legend.pos Character string specifying legend position. Options include
+#'   "top", "bottom", "left", "right", "none". Default is "top"
+#'
+#' @return A list containing two ggplot objects: location_plot (h1) and scale_plot (h2)
+#'
+#' @examples
+#' \dontrun{
+#' plots <- plot_hyper_with_prior_gg(hsamples, pp.prior, nrow = 4, ncol = 6)
+#' print(plots$location_plot)
+#' print(plots$scale_plot)
+#' }
+#'
+#' @export
+plot_hyper_with_prior <- function(samples, 
+                                     p.prior, 
+                                     nrow = 4, 
+                                     ncol = 4, 
+                                     start = 1, 
+                                     end = NA,
+                                     post.col = "black",
+                                     prior.col = "red",
+                                     post.lwd = 1,
+                                     prior.lwd = 1,
+                                     add.legend = TRUE,
+                                     legend.pos = "top") {
+  
+  # Extract hyper samples
+  hyper <- attr(samples, "hyper")
+  if (is.na(end)) end <- hyper$nmc
+  
+  # Get location (h1) and scale (h2) parameters
+  phi1 <- hyper$phi[[1]][, , start:end]  # location
+  phi2 <- hyper$phi[[2]][, , start:end]  # scale
+  
+  # Extract parameter names
+  param_names <- dimnames(phi1)[[2]]
+  
+  # Function to create posterior data frame
+  create_posterior_df <- function(phi, param_names, param_type) {
+    map_dfr(seq_along(param_names), function(i) {
+      post_samples <- as.vector(phi[, i, ])
+      tibble(
+        parameter = paste(param_names[i], param_type),
+        value = post_samples
+      )
+    })
+  }
+  
+  # Function to calculate prior density
+  calculate_prior_density <- function(prior_spec, x_seq) {
+    if (attr(prior_spec, "dist") == "tnorm") {
+      dtnorm(x_seq, 
+             prior_spec$mean, 
+             prior_spec$sd, 
+             prior_spec$lower, 
+             prior_spec$upper)
+    } else if (attr(prior_spec, "dist") == "gamma_l") {
+      dens <- dgamma(x_seq - prior_spec$lower, 
+                     shape = prior_spec$shape, 
+                     scale = prior_spec$scale)
+      dens[x_seq < prior_spec$lower] <- 0
+      dens
+    }
+  }
+  
+  # Function to create prior data frame
+  create_prior_df <- function(post_df, p.prior_list, param_names, param_type) {
+    # Get range for each parameter from posterior
+    param_ranges <- post_df %>%
+      group_by(parameter) %>%
+      summarise(min_val = min(value), max_val = max(value), .groups = "drop")
+    
+    map_dfr(seq_along(param_names), function(i) {
+      pname <- param_names[i]
+      full_pname <- paste(pname, param_type)
+      
+      # Get range for this parameter
+      param_range <- param_ranges %>% filter(parameter == full_pname)
+      x_seq <- seq(param_range$min_val, param_range$max_val, length.out = 500)
+      
+      # Calculate prior density
+      prior_spec <- p.prior_list[[pname]]
+      prior_dens <- calculate_prior_density(prior_spec, x_seq)
+      
+      tibble(
+        parameter = full_pname,
+        value = x_seq,
+        density = prior_dens
+      )
+    })
+  }
+  
+  # Create posterior data frames
+  post_h1 <- create_posterior_df(phi1, param_names, "h1")
+  post_h2 <- create_posterior_df(phi2, param_names, "h2")
+  
+  # Create prior data frames
+  prior_h1 <- create_prior_df(post_h1, p.prior[[1]], param_names, "h1")
+  prior_h2 <- create_prior_df(post_h2, p.prior[[2]], param_names, "h2")
+  
+  # Function to create plot
+  create_plot <- function(post_df, prior_df, title) {
+    p <- ggplot() +
+      stat_density(data = post_df, 
+                   aes(x = value, color = "Posterior"),
+                   geom = "line",
+                   linewidth = post.lwd) +
+      geom_line(data = prior_df, 
+                aes(x = value, y = density, color = "Prior"),
+                linewidth = prior.lwd) +
+      facet_wrap(~ parameter, scales = "free", nrow = nrow, ncol = ncol) +
+      scale_color_manual(name = "", 
+                         values = c("Posterior" = post.col, "Prior" = prior.col)) +
+      labs(x = "", y = "Density", title = title) +
+      theme_minimal() +
+      theme(
+        legend.position = if (add.legend) legend.pos else "none",
+        strip.text = element_text(size = 9),
+        panel.grid.minor = element_blank()
+      )
+    
+    p
+  }
+  
+  # Create plots
+  location_plot <- create_plot(post_h1, prior_h1, "Location Parameters (h1)")
+  scale_plot <- create_plot(post_h2, prior_h2, "Scale Parameters (h2)")
+  
+  # Return list of plots
+  list(
+    location_plot = location_plot,
+    scale_plot = scale_plot
+  )
+}

@@ -230,7 +230,7 @@ Given that the data included in the current analysis differed in a number of way
 (ref:accuracy-rt-caption) Accuracy and Reaction Time by Training Type and Testing Session. (A) Accuracy (percentage correct). (B) Mean reaction time (ms). Black points denote group means, whilst all other points denote individual subject means. Error bars represent within subjects’ standard error of the mean.
 
 ```{r accuracy-rt-plot, fig.cap = "(ref:accuracy-rt-caption)"}
-knitr::include_graphics("../figures/descriptive/day1v5_rain_acc_rt.jpeg")
+knitr::include_graphics("../figures/descriptive/rain_acc_rt.jpeg")
 ```
 
 ## Evidence Accumulation Modelling
@@ -242,7 +242,7 @@ From pre-training to post-training, thresholds differed by training type (Figure
 (ref:threshold-caption) Posterior distributions and pairwise contrasts for the threshold parameter by training condition and testing session. (A) Posterior distributions by training condition and testing session. (B) post-training minus pre-training pairwise contrasts per training condition. (C) Contrasts between training conditions relative to the untrained condition (top row) and between each training condition (bottom row). Black points show the median value of the posterior distribution, while error bars show the 95% quantile interval of the distribution. The dashed grey vertical line is shown at zero.
 
 ```{r threshold-plot, fig.cap = "(ref:threshold-caption)"}
-knitr::include_graphics("../figures/ea/day1/day1v5_thresholds_day_cond_alpha.jpeg")
+knitr::include_graphics("../figures/ea/thresholds_day_cond.jpeg")
 ```
 
 ### Drift rate
@@ -254,7 +254,7 @@ These drift rate difference results suggest that the quality of evidence accruin
 (ref:drift-rate-caption) Posterior distributions and pairwise contrasts for the drift rate parameter by training condition and testing session. (A) Posterior distributions by training condition and testing session. (B) post-training minus pre-training pairwise contrasts per training condition. (C) Contrasts between training conditions relative to the untrained condition (top row) and between each training condition (bottom row). Black points show the median value of the posterior distribution, while error bars show the 95% quantile interval of the distribution. The dashed grey vertical line is shown at zero.
 
 ```{r drift-rate-plot, fig.cap = "(ref:drift-rate-caption)"}
-knitr::include_graphics("../figures/ea/day1/day1v5_drift_day_cond_alpha.jpeg")
+knitr::include_graphics("../figures/ea/drift_rate_day_cond.jpeg")
 ```
 
 ### Non-decision time
@@ -264,7 +264,7 @@ From pre-training to post-training, non-decision time differed by training type 
 (ref:ndt-caption) Posterior distributions and pairwise contrasts for the non-decision time parameter by training condition and testing session. (A) Posterior distributions by training condition and testing session. (B) post-training minus pre-training pairwise contrasts per training condition. (C) Contrasts between training conditions relative to the untrained condition (top row) and between each training condition (bottom row). Black points show the median value of the posterior distribution, while error bars show the 95% quantile interval of the distribution. The dashed grey vertical line is shown at zero.
 
 ```{r ndt-plot, fig.cap = "(ref:ndt-caption)"}
-knitr::include_graphics("../figures/ea/day1/day1v5_ndt_day_cond_alpha.jpeg")
+knitr::include_graphics("../figures/ea/ndt_day_cond.jpeg")
 ```
 
 # Discussion

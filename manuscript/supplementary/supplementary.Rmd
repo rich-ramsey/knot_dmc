@@ -64,11 +64,11 @@ Supplementary Table 1 reports means and standard errors for accuracy and reactio
 (ref:descriptive-caption) Descriptive statistics for accuracy and reaction time data by training day and condition.
 
 ```{r descriptive-table}
-day1v5_group <- read_csv("../../data/processed/data1v5_group.csv") |>
+descriptives <- read_csv("../../tables/manifest/descriptives.csv") |>
   mutate(day = as_factor(str_remove(day, "Day ")))
 
 apa_table(
-  day1v5_group,
+  descriptives,
   caption = "(ref:descriptive-caption)"
 ) 
 ```
@@ -162,12 +162,12 @@ apa_table(
 
 \newpage
 
-Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 3).
+Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 2).
 
-(ref:prior-post-caption) Prior and Posterior Graphs. Red lines represent priors, while black lines represent posteriors. Only a selection of all the parameters are shown here.
+(ref:prior-post-caption) Prior and Posterior Graphs. Red lines represent priors, while black lines represent posteriors. Only location parameters from day 5 are shown here.
 
 ```{r prior-post-plot, fig.cap = "(ref:prior-post-caption)"}
-knitr::include_graphics("../../figures/ea/pp.pdf")
+knitr::include_graphics("../../figures/ea/day5_pp_location.jpeg")
 ```
 
 ### Model fit
@@ -177,7 +177,7 @@ Supplementary Figures 4 displays the fits of the LBA model to the data in terms 
 (ref:model-fit-caption) Cumulative distribution functions for data (thick lines) and fits (line grey lines) of the LBA model. Each panel contains results for both same and different responses at each level of stimulus (match and mismatch) and training type (untrained, name, tie, both). Symbols mark the 10th, 30th, 50th, 70th and 90th percentile (solid for average fits, open for data). Grey points are 500 percentile estimates from fits for random draws from posterior samples; the grey line and black solid points are the average of these 500 fits.
 
 ```{r model-fit-plot, fig.cap = "(ref:model-fit-caption)"}
-knitr::include_graphics("../../figures/ea/KN_fit.pdf")
+knitr::include_graphics("../../figures/ea/day5_KN_fit.pdf")
 ```
 
 ### Point and interval summary data
@@ -187,7 +187,7 @@ The following supplementary tables provide point and interval estimates for the 
 (ref:group-lba-table-caption) Point (median) and interval (95% quantile) estimates by training day and condition.
 
 ```{r group-lba-table}
-group_q <- read_csv("../../data/summary/group_q.csv") |> 
+group_q <- read_csv("../../tables/ea/group_q.csv") |> 
   mutate(day = factor(day))
 
 apa_table(
@@ -199,7 +199,7 @@ apa_table(
 (ref:contrasts-lba-table-caption) Point (median) and interval (95% quantile) estimates for pairwise contrasts between conditions on day 1 and day 5.
 
 ```{r contrasts-lba-table}
-contrasts_q <- read_csv("../../data/summary/contrasts_q.csv") |> 
+contrasts_q <- read_csv("../../tables/ea/contrasts_q.csv") |> 
   mutate(day = factor(day))
 
 apa_table(
@@ -212,7 +212,7 @@ apa_table(
 (ref:day-contrasts-lba-table-caption) Point (median) and interval (95% quantile) estimates for pairwise contrasts between pre-training and post-training across training conditions.
 
 ```{r day-contrasts-lba-table}
-day_contrasts_q <- read_csv("../../data/summary/day_contrasts_q.csv")
+day_contrasts_q <- read_csv("../../tables/ea/day_contrasts_q.csv")
 
 apa_table(
   day_contrasts_q,

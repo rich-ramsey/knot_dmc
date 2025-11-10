@@ -13,20 +13,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This file builds Bayesian regression models using brms in order to analyses the manifest measures (accuracy and RT).
 
-# load libraries #
+It uses the day 1 (pre-training) and the day 5 (post-training) data.
 
-```{r load-pkg}
+```{r setup}
 pkg <- c("tidyverse", "RColorBrewer", "patchwork", "brms", "tidybayes", 
          "ggdist", "future", "bayesplot", "cmdstanr", "parallel", "rstan")
 
 lapply(pkg, library, character.only = TRUE)
-```
 
-# plot settings #
-
-theme settings for ggplot
-
-```{r, eval = F}
+## theme settings for ggplot
 theme_set(
   theme_bw() +
     theme(text = element_text(size = 18, face = "bold"), 
@@ -37,11 +32,8 @@ theme_set(
 ## Set the amount of dodge in figures
 pd <- position_dodge(0.7)
 pd2 <- position_dodge(1)
-```
 
-# package settings #
-
-```{r}
+## package settings
 options(brms.backend = "cmdstanr",
         mc.cores = parallel::detectCores(),
         future.fork.enable = TRUE,
@@ -52,6 +44,8 @@ rstan_options(auto_write = TRUE)
 supportsMulticore()
 
 detectCores()
+
+plan(multicore)
 ```
 
 # 1. load the data #
@@ -61,10 +55,20 @@ accuracy data
 ```{r}
 data_acc <- read_csv("data/processed/data_acc.csv") %>%
   mutate(PID = factor(PID),
+         DAY = factor(DAY),
          GROUP = factor(GROUP,
                         levels = c("untrained", "name", "tie", "both")))
 head(data_acc)
 glimpse(data_acc)
+
+## checks
+## day 5, session 2 AND Day 1, session 1
+data_acc %>%
+  distinct(DAY, SESSION)
+
+## 18 PIDs, PID 3 and 17 did not complete day 5, session 2 
+data_acc %>% 
+  distinct(PID)
 ```
 
 rt data
@@ -72,6 +76,7 @@ rt data
 ```{r}
 data_rt <- read_csv("data/processed/data_rt.csv") %>%
   mutate(PID = factor(PID),
+         DAY = factor(DAY),
          GROUP = factor(GROUP,
                         levels = c("untrained", "name", "tie", "both")))
 head(data_rt)
@@ -83,14 +88,21 @@ glimpse(data_rt)
 you will only need to load models if you've already created them and you want to take another look at them.
 
 ```{r}
+## rt models
 # b0.1 <- readRDS("models/manifest/b0.1.rds")
 # b0.2 <- readRDS("models/manifest/b0.2.rds")
 # b0.3 <- readRDS("models/manifest/b0.3.rds")
 # b1 <- readRDS("models/manifest/b1.rds")
+# b2 <- readRDS("models/manifest/b2.rds")
+# b3 <- readRDS("models/manifest/b3.rds")
 # 
+
+## accuracy models
 # ab0.1 <- readRDS("models/manifest/ab0.1.rds")
 # ab0.2 <- readRDS("models/manifest/ab0.2.rds")
 # ab1 <- readRDS("models/manifest/ab1.rds")
+# ab2 <- readRDS("models/manifest/ab2.rds")
+# ab3 <- readRDS("models/manifest/ab3.rds")
 ```
 
 # 3. take a quick look at the lowest RT per person and on average across the group #
@@ -160,11 +172,10 @@ priors = c(
 build the model
 
 ```{r}
-plan(multicore)
 b0.1 <- brm(formula = formula,
         data = data_rt, family = shifted_lognormal(),
         prior = priors,
-        iter = 2000, warmup = 1000, cores = 8, chains = 4,
+        iter = 2000, warmup = 1000, cores = 28, chains = 4,
         save_pars = save_pars(all=TRUE),
         seed = 123,
         file = "models/manifest/b0.1")
@@ -176,9 +187,6 @@ pp_checks
 ```{r}
 ppb0.1 <- pp_check(b0.1, ndraws = 100)
 ppb0.1
-
-pmed0.1 <- pp_check(b0.1, type = "stat", stat = 'median', ndraws = 100)
-pmed0.1
 ```
 
 ### Model b0.2 - intercepts only model with variation by pid ###
@@ -214,11 +222,10 @@ priors = c(
 build the model
 
 ```{r}
-plan(multicore)
 b0.2 <- brm(formula = formula,
         data = data_rt, family = shifted_lognormal(),
         prior = priors,
-        iter = 4000, warmup = 1000, cores = 8, chains = 4,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
         save_pars = save_pars(all=TRUE),
         seed = 123,
         file = "models/manifest/b0.2")
@@ -230,9 +237,6 @@ pp_checks
 ```{r}
 ppb0.2 <- pp_check(b0.2, ndraws = 100)
 ppb0.2
-
-pmed0.2 <- pp_check(b0.2, type = "stat", stat = 'median', ndraws = 100)
-pmed0.2
 ```
 
 ### Model b0.3 - b0.2 plus variation by pid in ndt ###
@@ -269,11 +273,10 @@ priors = c(
 build the model
 
 ```{r}
-plan(multicore)
 b0.3 <- brm(formula = formula,
         data = data_rt, family = shifted_lognormal(),
         prior = priors,
-        iter = 4000, warmup = 1000, cores = 8, chains = 4,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
         save_pars = save_pars(all=TRUE),
         seed = 123,
         file = "models/manifest/b0.3")
@@ -286,9 +289,6 @@ pp_checks
 ```{r}
 ppb0.3 <- pp_check(b0.3, ndraws = 100)
 ppb0.3
-
-pmed0.3 <- pp_check(b0.3, type = "stat", stat = 'median', ndraws = 100)
-pmed0.3
 ```
 
 ### model b1 - add cue GROUP (training condition) as a predictor ###
@@ -327,11 +327,10 @@ priors = c(
 build the model
 
 ```{r}
-plan(multicore)
 b1 <- brm(formula = formula,
         data = data_rt, family = shifted_lognormal(),
         prior = priors,
-        iter = 6000, warmup = 2000, cores = 8, chains = 4,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
         control = list(adapt_delta = 0.99, max_treedepth = 15),
         save_pars = save_pars(all=TRUE),
         seed = 123,
@@ -353,9 +352,129 @@ pp_checks
 ```{r}
 ppb1 <- pp_check(b1, ndraws = 100)
 ppb1
+```
 
-pmedb1 <- pp_check(b1, type = "stat", stat = 'median', ndraws = 100)
-pmedb1
+### model b2 - add DAY (pre-training vs post-training) as a predictor ###
+
+formula
+
+```{r}
+formula = bf(RT ~ 1 + GROUP + DAY +
+             (1 + GROUP + DAY | PID),
+             ndt ~ (1 | PID))
+```
+
+check the priors available.
+
+```{r}
+get_prior(formula,
+          data = data_rt, family = shifted_lognormal())
+```
+
+set priors 
+
+```{r}
+priors = c(
+  set_prior('normal(6.68, 0.5)', class = 'Intercept'),  # around 800ms
+  set_prior('normal(5.99, 0.5)', class = 'Intercept', dpar = "ndt"),  # around 500ms
+  set_prior('normal(0, 0.5)', class = 'b'),
+  set_prior('normal(0, 0.5)', class = 'sd'), # variation across pID 
+  set_prior('normal(0, 0.5)', class = 'sd', dpar='ndt'),
+  set_prior('normal(0, 0.5)', class = 'sigma'), # SD of individual rts in
+  set_prior("lkj(2)", class = "cor") # correlation between varying effects log-units
+)
+```
+
+build the model
+
+```{r}
+plan(multicore)
+b2 <- brm(formula = formula,
+        data = data_rt, family = shifted_lognormal(),
+        prior = priors,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
+        control = list(adapt_delta = 0.99, max_treedepth = 15),
+        save_pars = save_pars(all=TRUE),
+        seed = 123,
+        init = 0.1,
+        file = "models/manifest/b2")
+summary(b2)
+```
+
+Plot
+
+```{r}
+# p1 = plot(conditional_effects(b2), plot=FALSE)
+# 
+# wrap_plots(p1)
+```
+
+pp_checks
+
+```{r}
+ppb2 <- pp_check(b2, ndraws = 100)
+ppb2
+```
+
+### model b3 - add GROUP*DAY interaction as a predictor ###
+
+formula
+
+```{r}
+formula = bf(RT ~ 1 + GROUP * DAY +
+             (1 + GROUP * DAY | PID),
+             ndt ~ (1 | PID))
+```
+
+check the priors available.
+
+```{r}
+get_prior(formula,
+          data = data_rt, family = shifted_lognormal())
+```
+
+set priors 
+
+```{r}
+priors = c(
+  set_prior('normal(6.68, 0.5)', class = 'Intercept'),  # around 800ms
+  set_prior('normal(5.99, 0.5)', class = 'Intercept', dpar = "ndt"),  # around 500ms
+  set_prior('normal(0, 0.5)', class = 'b'),
+  set_prior('normal(0, 0.5)', class = 'sd'), # variation across pID 
+  set_prior('normal(0, 0.5)', class = 'sd', dpar='ndt'),
+  set_prior('normal(0, 0.5)', class = 'sigma'), # SD of individual rts in
+  set_prior("lkj(2)", class = "cor") # correlation between varying effects log-units
+)
+```
+
+build the model
+
+```{r}
+b3 <- brm(formula = formula,
+        data = data_rt, family = shifted_lognormal(),
+        prior = priors,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
+        control = list(adapt_delta = 0.99, max_treedepth = 15),
+        save_pars = save_pars(all=TRUE),
+        seed = 123,
+        init = 0.1,
+        file = "models/manifest/b3")
+summary(b3)
+```
+
+Plot
+
+```{r}
+# p1 = plot(conditional_effects(b3), plot=FALSE)
+# 
+# wrap_plots(p1)
+```
+
+pp_checks
+
+```{r}
+ppb3 <- pp_check(b3, ndraws = 100)
+ppb3
 ```
 
 
@@ -395,7 +514,7 @@ plan(multicore)
 ab0.1 <- brm(formula = formula,
         data = data_acc, family = bernoulli(link = "logit"),
         prior = priors,
-        iter = 4000, warmup = 1000, cores = 8, chains = 4,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
         save_pars = save_pars(all=TRUE),
         seed = 123,
         file = "models/manifest/ab0.1")
@@ -441,7 +560,7 @@ plan(multicore)
 ab0.2 <- brm(formula = formula,
         data = data_acc, family = bernoulli(link = "logit"),
         prior = priors,
-        iter = 4000, warmup = 1000, cores = 8, chains = 4,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
         save_pars = save_pars(all=TRUE),
         seed = 123,
         file = "models/manifest/ab0.2")
@@ -491,7 +610,7 @@ plan(multicore)
 ab1 <- brm(formula = formula,
         data = data_acc, family = bernoulli(link = "logit"),
         prior = priors,
-        iter = 4000, warmup = 1000, cores = 8, chains = 4,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
         save_pars = save_pars(all=TRUE),
         seed = 123,
         file = "models/manifest/ab1")
@@ -503,6 +622,102 @@ pp_checks
 ```{r}
 ppab1 <- pp_check(ab1, ndraws = 100)
 ppab1
+```
+
+### model ab2 - add DAY (training session, pre vs post-training) as a predictor ###
+
+formula
+
+```{r}
+formula = bf(ACC ~ 1 + GROUP + DAY +
+             (1 + GROUP + DAY | PID))
+```
+
+check the priors available
+
+```{r}
+get_prior(formula,
+          data = data_acc, family = bernoulli(link = "logit"))
+```
+
+set priors
+
+```{r}
+priors = c(
+  set_prior('normal(0, 1)', class = 'Intercept'),
+  set_prior('normal(0, 0.5)', class = 'sd'),
+  set_prior('normal(0, 0.5)', class = 'b'),
+  set_prior("lkj(2)", class = "cor")
+)
+```
+
+build the model
+
+```{r}
+plan(multicore)
+ab2 <- brm(formula = formula,
+        data = data_acc, family = bernoulli(link = "logit"),
+        prior = priors,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
+        save_pars = save_pars(all=TRUE),
+        seed = 123,
+        file = "models/manifest/ab2")
+summary(ab2)
+```
+
+pp_checks
+
+```{r}
+ppab2 <- pp_check(ab2, ndraws = 100)
+ppab2
+```
+
+### model ab3 - add the GROUP * DAY interaction as a predictor ###
+
+formula
+
+```{r}
+formula = bf(ACC ~ 1 + GROUP * DAY +
+             (1 + GROUP * DAY | PID))
+```
+
+check the priors available
+
+```{r}
+get_prior(formula,
+          data = data_acc, family = bernoulli(link = "logit"))
+```
+
+set priors
+
+```{r}
+priors = c(
+  set_prior('normal(0, 1)', class = 'Intercept'),
+  set_prior('normal(0, 0.5)', class = 'sd'),
+  set_prior('normal(0, 0.5)', class = 'b'),
+  set_prior("lkj(2)", class = "cor")
+)
+```
+
+build the model
+
+```{r}
+plan(multicore)
+ab3 <- brm(formula = formula,
+        data = data_acc, family = bernoulli(link = "logit"),
+        prior = priors,
+        iter = 4000, warmup = 2000, cores = 28, chains = 4,
+        save_pars = save_pars(all=TRUE),
+        seed = 123,
+        file = "models/manifest/ab3")
+summary(ab3)
+```
+
+pp_checks
+
+```{r}
+ppab3 <- pp_check(ab3, ndraws = 100)
+ppab3
 ```
 
 # 5. model diagnostics #
@@ -519,24 +734,24 @@ full rt model
 
 ```{r}
 # this adds the chains from model b1 and creates a posterior samples dataframe called post
-post_b1 <- as_draws_df(b1)
-head(post_b1)
+post_b3 <- as_draws_df(b3)
+head(post_b3)
 
 ## here I only focus on the chains for the key variables of interest, but one can easily visualise all the variables if one wishes. Although you'll need a lot of separate figures...
 
-post_b1 <- post_b1 %>%
+post_b3 <- post_b3 %>%
   select(contains(c("b_", "sd_", ".chain"))) %>% # here I select fixed effects and sds. 
   mutate(chain = .chain)  
 
 # now we plot them and save them as necessary
-p_chains1 <- post_b1 %>%
+p_chains1 <- post_b3 %>%
   mcmc_trace(facet_args = list(ncol = 4)) +
   scale_x_continuous(breaks = c(0, 4000)) + # if you have 4000 post warm-up samples per chain
   theme_bw() +
   theme(legend.position = "bottom")
 p_chains1
 # save it
-ggsave ("figures/manifest/b1_chains.jpeg",
+ggsave ("figures/manifest/b3_chains.jpeg",
         width = 8, height = 6)
 ```
 
@@ -545,17 +760,17 @@ chains look good
 ### other diagnostics ###
 
 ```{r}
-b1_neff <- mcmc_plot(b1, type = "neff")
-b1_neff
+b3_neff <- mcmc_plot(b3, type = "neff")
+b3_neff
 
-b1_rhat <- mcmc_plot(b1, type = "rhat")
-b1_rhat
+b3_rhat <- mcmc_plot(b3, type = "rhat")
+b3_rhat
 
 # this creates a combined plot
-b1_diag <- b1_neff / b1_rhat 
-b1_diag
+b3_diag <- b3_neff / b3_rhat 
+b3_diag
 
-ggsave("figures/manifest/b1_diag.jpeg",
+ggsave("figures/manifest/b3_diag.jpeg",
        width = 8, height = 6)
 ```
 
@@ -565,24 +780,24 @@ ggsave("figures/manifest/b1_diag.jpeg",
 
 ```{r}
 # this adds the chains from model ab1 and creates a posterior samples dataframe called post
-post_ab1 <- as_draws_df(ab1)
-head(post_ab1)
+post_ab3 <- as_draws_df(ab3)
+head(post_ab3)
 
 ## here I only focus on the chains for the key variables of interest, but one can easily visualise all the variables if one wishes. Although you'll need a lot of separate figures...
 
-post_ab1 <- post_ab1 %>%
+post_ab3 <- post_ab3 %>%
   select(contains(c("b_", "sd_", ".chain"))) %>% # here I select fixed effects and sds. 
   mutate(chain = .chain)  
 
 # now we plot them and save them as necessary
-p_chains2 <- post_ab1 %>%
+p_chains2 <- post_ab3 %>%
   mcmc_trace(facet_args = list(ncol = 3)) +
   scale_x_continuous(breaks = c(0, 3000)) + # if you have 4000 post warm-up samples per chain
   theme_bw() +
   theme(legend.position = "bottom")
 p_chains2
 # save it
-ggsave ("figures/manifest/ab1_chains.jpeg",
+ggsave ("figures/manifest/ab3_chains.jpeg",
         width = 8, height = 6)
 ```
 
@@ -591,17 +806,17 @@ chains look good
 ### other diagnostics ###
 
 ```{r}
-ab1_neff <- mcmc_plot(ab1, type = "neff")
-ab1_neff
+ab3_neff <- mcmc_plot(ab3, type = "neff")
+ab3_neff
 
-ab1_rhat <- mcmc_plot(ab1, type = "rhat")
-ab1_rhat
+ab3_rhat <- mcmc_plot(ab3, type = "rhat")
+ab3_rhat
 
 # this creates a combined plot
-ab1_diag <- ab1_neff / ab1_rhat 
-ab1_diag
+ab3_diag <- ab3_neff / ab3_rhat 
+ab3_diag
 
-ggsave("figures/manifest/ab1_diag.jpeg",
+ggsave("figures/manifest/ab3_diag.jpeg",
        width = 8, height = 6)
 ```
 

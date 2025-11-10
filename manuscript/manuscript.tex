@@ -292,7 +292,7 @@ We report how we determined our sample size, all data exclusions (if any), all m
 
 We deviated from our pre-registration in one way. Originally, we had intended to include data from the pre- and post-training session in one model. However, the model building process could not be completed with pre- and post-training session data included, due to the large number of parameters being fit and the model failing to converge. Instead, we modelled pre- and post-training data separately and then compared the parameter estimates from the posterior distributions. By doing so, the number of parameters was reduced by half and the models could converge. All other aspects of the pre-registration were unchanged.
 
-The analysis code used in this paper is available online, and the manuscript was written in R using the papaja() package (Aust \& Barth, 2023), which means it is computationally reproducible. The code and manuscript are available via GitHub (\url{https://github.com/rich-ramsey/knot_dmc}). Given that the data were collected in 2006, it was not yet routine to request explicit consent to share data publicly. Therefore, the raw data are only available from the authors upon request. With this said, for the purposes of code review and computational reproducibility, we provide simulated data, which is based on the structure of the raw data. This means that our data processing workflow can be checked and verified by others even without requesting the raw data.
+The analysis code used in this paper is available online, and the manuscript was written in R using the papaja() package (Aust \& Barth, 2025), which means it is computationally reproducible. The code and manuscript are available via GitHub (\url{https://github.com/rich-ramsey/knot_dmc}). Given that the data were collected in 2006, it was not yet routine to request explicit consent to share data publicly. Therefore, the raw data are only available from the authors upon request. With this said, for the purposes of code review and computational reproducibility, we provide simulated data, which is based on the structure of the raw data. This means that our data processing workflow can be checked and verified by others even without requesting the raw data.
 
 \subsection{Dataset}\label{dataset}
 
@@ -378,7 +378,7 @@ Given that the data included in the current analysis differed in a number of way
 
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1.0\textwidth,]{../figures/descriptive/day1v5_rain_acc_rt} 
+{\centering \includegraphics[width=1.0\textwidth,]{../figures/descriptive/rain_acc_rt} 
 
 }
 
@@ -395,7 +395,7 @@ From pre-training to post-training, thresholds differed by training type (Figure
 
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1.0\textwidth,]{../figures/ea/day1/day1v5_thresholds_day_cond_alpha} 
+{\centering \includegraphics[width=1.0\textwidth,]{../figures/ea/thresholds_day_cond} 
 
 }
 
@@ -412,7 +412,7 @@ These drift rate difference results suggest that the quality of evidence accruin
 
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1.0\textwidth,]{../figures/ea/day1/day1v5_drift_day_cond_alpha} 
+{\centering \includegraphics[width=1.0\textwidth,]{../figures/ea/drift_rate_day_cond} 
 
 }
 
@@ -427,7 +427,7 @@ From pre-training to post-training, non-decision time differed by training type 
 
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1.0\textwidth,]{../figures/ea/day1/day1v5_ndt_day_cond_alpha} 
+{\centering \includegraphics[width=1.0\textwidth,]{../figures/ea/ndt_day_cond} 
 
 }
 
@@ -471,7 +471,7 @@ It is also important to acknowledge that any conclusions based on comparisons to
 \phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
 \bibitem[\citeproctext]{ref-R-papaja}
-Aust, F., \& Barth, M. (2023). \emph{{papaja}: {Prepare} reproducible {APA} journal articles with {R Markdown}}. Retrieved from \url{https://github.com/crsh/papaja}
+Aust, F., \& Barth, M. (2025). \emph{{papaja}: {Prepare} reproducible {APA} journal articles with {R Markdown}}. \url{https://doi.org/10.32614/CRAN.package.papaja}
 
 \bibitem[\citeproctext]{ref-brown2008}
 Brown, S. D., \& Heathcote, A. (2008). The simplest complete model of choice response time: {Linear} ballistic accumulation. \emph{Cognitive Psychology}, \emph{57}(3), 153--178. \url{https://doi.org/10.1016/j.cogpsych.2007.12.002}

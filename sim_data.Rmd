@@ -15,24 +15,23 @@ This file takes fitted regression models from the manifest analysis and uses the
 
 Since we cannot share the original data publicly because the ethical approval was not in place to do so when the data were collected in 2006, the purpose of this simulated data is to allow others to check the coding pipeline that we used.
 
-Therefore, using this data will NOT produce the same results as we report in the manuscript, since the data are different. But the simulated data should resemble the structure of the real data.
+Therefore, using this data will NOT produce the same results as we report in the manuscript, since the data are different. 
+But the simulated data should resemble the structure of the real data.
 
-Also note that for simplicity, we just use the manifest regression models and not the LBA models to generate reaction time and accuracy data. The reason for doing so is that our main aim is to provide fairly similar data to the original so that folks can reproduce our analytical pipeline, rather than any other aim that might rely on the specifics of using a LBA model.
+Also note that for simplicity, we just use the manifest regression models and not the LBA models to generate reaction time and accuracy data. 
+The reason for doing so is that our main aim is to provide fairly similar data to the original so that folks can reproduce our analytical pipeline, rather than any other aim that might rely on the specifics of using a LBA model.
 
-# load libraries #
+And this version of the sim data file uses models that included pre and post-training data.
 
-```{r load-pkg}
+
+```{r setup}
+## load libraries 
 pkg <- c("tidyverse", "RColorBrewer", "patchwork", "brms", "tidybayes", 
          "ggdist", "future", "bayesplot", "cmdstanr", "parallel", "rstan")
 
 lapply(pkg, library, character.only = TRUE)
-```
 
-# plot settings #
-
-theme settings for ggplot
-
-```{r, eval = F}
+## theme settings for ggplot
 theme_set(
   theme_bw() +
     theme(text = element_text(size = 18, face = "bold"), 
@@ -43,11 +42,11 @@ theme_set(
 ## Set the amount of dodge in figures
 pd <- position_dodge(0.7)
 pd2 <- position_dodge(1)
-```
 
-# package settings #
+## custom wrangle and plotting functions
+source("custom_functions/wrangle_plot.R")
 
-```{r}
+## package settings
 options(brms.backend = "cmdstanr",
         mc.cores = parallel::detectCores(),
         future.fork.enable = TRUE,
@@ -58,6 +57,8 @@ rstan_options(auto_write = TRUE)
 supportsMulticore()
 
 detectCores()
+
+plan(multicore)
 ```
 
 # 1. load the models and the raw (original) data #
@@ -66,10 +67,10 @@ models
 
 ```{r}
 ## rt
-b1 <- readRDS("models/manifest/b1.rds")
+b3 <- readRDS("models/manifest/b3.rds")
 
 ## accuracy
-ab1 <- readRDS("models/manifest/ab1.rds")
+ab3 <- readRDS("models/manifest/ab3.rds")
 ```
 
 data
@@ -78,6 +79,7 @@ data
 # rt data
 data_rt <- read_csv("data/processed/data_rt.csv") %>% 
   mutate(PID=factor(PID),
+         DAY=factor(DAY),
          GROUP = factor(GROUP,
                         levels = c("untrained", "name", "tie", "both")))
 head(data_rt)
@@ -85,6 +87,7 @@ head(data_rt)
 # accuracy data
 data_acc <- read_csv("data/processed/data_acc.csv") %>% 
     mutate(PID=factor(PID),
+           DAY=factor(DAY),
            GROUP = factor(GROUP,
                           levels = c("untrained", "name", "tie", "both")))
 head(data_acc)
@@ -98,7 +101,7 @@ using the original data to define the design to make predictions on.
 # Step 1: Use the original data as the base for simulation
 acc_preds <- data_acc %>%
   # This adds predicted values based on the posterior distribution
-  add_predicted_draws(ab1,
+  add_predicted_draws(ab3,
                       seed = 123)
 head(acc_preds)
 glimpse(acc_preds)
@@ -117,53 +120,54 @@ glimpse(acc_sim_data)
 at the pid level
 
 ```{r}
-acc_sim_pid <- acc_sim_data %>% 
-  group_by(PID, GROUP) %>% 
-  summarise(sum_acc = sum(.prediction), 
-            mean_acc = mean(.prediction, na.rm = TRUE) * 100, 
-            sd_acc = sd(.prediction, na.rm = TRUE) * 100)
-head(acc_sim_pid)
+acc_sim_ind <- summarise_individual(
+  acc_sim_data,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = .prediction,
+  scale = 100
+)
+acc_sim_ind
 ```
 
 at the group level
 
 ```{r}
-acc_sim_g <- acc_sim_data %>% 
-  group_by(GROUP) %>% 
-  summarise(n=length(unique(PID)),
-            sum_acc = sum(.prediction), 
-            mean_acc = mean(.prediction, na.rm = TRUE) * 100, 
-            sd_acc = sd(.prediction, na.rm = TRUE) * 100, 
-            sem_acc = (sd_acc/sqrt(n)))
-acc_sim_g
+acc_sim_group <- summarise_group(
+  acc_sim_data,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = .prediction,
+  scale = 100
+)
+acc_sim_group
 
-# # A tibble: 4 × 6
-#   GROUP         n sum_acc mean_acc sd_acc sem_acc
-#   <fct>     <int>   <int>    <dbl>  <dbl>   <dbl>
-# 1 untrained    18     298     85.6   35.1    8.28
-# 2 name         18     290     82.6   37.9    8.94
-# 3 tie          18     312     89.1   31.2    7.34
-# 4 both         18     308     87.7   32.8    7.74
+# A tibble: 8 × 6
+#   DAY   GROUP         n mean_val sd_val sem_val
+#   <fct> <fct>     <int>    <dbl>  <dbl>   <dbl>
+# 1 Day 1 untrained    18     89.1   31.2    7.36
+# 2 Day 1 name         18     89.9   30.2    7.13
+# 3 Day 1 tie          18     85.8   35.0    8.24
+# 4 Day 1 both         18     87.0   33.6    7.93
+# 5 Day 5 untrained    18     89.4   30.9    7.28
+# 6 Day 5 name         18     85.2   35.6    8.39
+# 7 Day 5 tie          18     85.7   35.0    8.26
+# 8 Day 5 both         18     87.2   33.5    7.89
 ```
 
 ## plot accuracy ##
 
 ```{r}
-p2.1 <- ggplot(acc_sim_pid, aes(x = GROUP, y = mean_acc, 
-                               fill = GROUP, colour = GROUP)) +
-  geom_jitter(position=position_jitterdodge(dodge.width =1), 
-              size = 2.5, colour="grey") +
-  geom_violin(alpha = 0.5, position=pd2) +
-  geom_errorbar(data = acc_sim_g, aes(ymin=mean_acc-sem_acc,
-                                         ymax=mean_acc+sem_acc), 
-                width=.3, linewidth =0.5, colour = "black", position=pd2) +
-  geom_point(data = acc_sim_g, colour = "black", position=pd2, size =4) +
-  geom_line(data=acc_sim_g, group=1, colour = "black") +
-  xlab("Training Condition") + 
-  ylab('Percentage Correct') + 
-  scale_fill_brewer(palette = "Dark2") +
-  scale_colour_brewer(palette = "Dark2") +
-  theme(legend.position = "none")
+p2.1 <- plot_rain(
+  acc_sim_ind,
+  acc_sim_group,
+  x_var = "GROUP",
+  y_var = "mean_val",
+  facet_var = "DAY",
+  x_label = "Training Condition",
+  y_label = "Percentage Correct",
+  point_spread = .1
+)
 p2.1
 ```
 
@@ -179,7 +183,7 @@ using the original data
 
 rt_preds <- data_acc %>%
   # This adds predicted values based on the posterior distribution
-  add_predicted_draws(b1,
+  add_predicted_draws(b3,
                       seed = 123)
 head(rt_preds)
 glimpse(rt_preds)
@@ -198,97 +202,104 @@ glimpse(rt_sim_data)
 at the pid level
 
 ```{r}
-rt_sim_pid <- rt_sim_data %>% 
-  group_by(PID, GROUP) %>%
-  summarise(mean_rt = mean(.prediction, na.rm = TRUE), 
-            sd_rt = sd(.prediction, na.rm = TRUE))
-head(rt_sim_pid)
+rt_sim_ind <- summarise_individual(
+  rt_sim_data,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = .prediction
+)
+rt_sim_ind
 ```
 
 at the group level
 
 ```{r}
-rt_sim_g <- rt_sim_data %>% 
-  group_by(GROUP) %>%
-  summarise(n=length(unique(PID)),
-            mean_rt = mean(.prediction, na.rm = TRUE), 
-            sd_rt = sd(.prediction, na.rm = TRUE), 
-            sem_rt = (sd_rt/sqrt(n)))
-rt_sim_g
+rt_sim_group <- summarise_group(
+  rt_sim_data,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = .prediction
+)
+rt_sim_group
 
-# # A tibble: 4 × 5
-#   GROUP         n mean_rt sd_rt sem_rt
-#   <fct>     <int>   <dbl> <dbl>  <dbl>
-# 1 untrained    18   1149.  380.   89.5
-# 2 name         18   1072.  382.   90.0
-# 3 tie          18   1123.  334.   78.7
-# 4 both         18   1029.  301.   70.9
+# A tibble: 8 × 6
+#   DAY   GROUP         n mean_val sd_val sem_val
+#   <fct> <fct>     <int>    <dbl>  <dbl>   <dbl>
+# 1 Day 1 untrained    18    1284.   411.    96.8
+# 2 Day 1 name         18    1311.   420.    99.0
+# 3 Day 1 tie          18    1241.   379.    89.2
+# 4 Day 1 both         18    1235.   455.   107. 
+# 5 Day 5 untrained    18    1142.   334.    78.6
+# 6 Day 5 name         18    1032.   320.    75.4
+# 7 Day 5 tie          18    1118.   352.    83.0
+# 8 Day 5 both         18    1112.   369.    87.0
 ```
+
 
 ## plot rt ##
 
 ```{r}
-p3.1 <- ggplot(rt_sim_pid, aes(x = GROUP, y = mean_rt, 
-                               fill = GROUP, colour = GROUP)) +
-  geom_jitter(position=position_jitterdodge(dodge.width =1), 
-              size = 2.5, colour="grey") +
-  geom_violin(alpha = 0.5, position=pd2) +
-  geom_errorbar(data = rt_sim_g, aes(ymin=mean_rt-sem_rt,
-                                         ymax=mean_rt+sem_rt), 
-                width=.3, linewidth =0.5, colour = "black", position=pd2) +
-  geom_point(data = rt_sim_g, colour = "black", position=pd2, size =4) +
-  geom_line(data=rt_sim_g, group=1, colour = "black") +
-  xlab("Training Condition") + 
-  ylab('Mean Reaction Time (ms)') + 
-  scale_fill_brewer(palette = "Dark2") +
-  scale_colour_brewer(palette = "Dark2") +
-  theme(legend.position = "none") +
-  scale_y_continuous(limits = c(800, 1600),
-                     breaks = seq(800, 1600, 200))
+p3.1 <- plot_rain(
+  rt_sim_ind,
+  rt_sim_group,
+  x_var = "GROUP",
+  y_var = "mean_val",
+  facet_var = "DAY",
+  x_label = "Training Condition",
+  y_label = "Mean Reaction Time (ms)",
+  point_spread = .1
+)
 p3.1
 ```
 
-This also looks sensible, given the descriptives from the original data.
+This also looks sensible, given the descriptive stats from the original data.
 
 # 4. plot accuracy and rt together #
 
 plot together
 
 ```{r}
-p4.1 <- (p2.1 | p3.1) +
+p4.1 <- (p2.1 / p3.1) +
   plot_annotation(tag_levels = 'A')
 p4.1
 
-ggsave("figures/simulated/violin_acc_rt.jpeg",
-       width = 10, height = 6, dpi = 800)
+ggsave("figures/simulated/rain_sim_acc_rt.jpeg",
+       width = 10, height = 10, dpi = 800)
 ```
 
 # 5. wrangle to create a simulated "raw" dataset #
 
-here we combine simulated accuracy and reaction time data and wrangle it to have the same structure as the original data.
+Here we combine simulated accuracy and reaction time data and wrangle it to have the same structure as the original data.
 
-The purpose of doing so is so that folks can use this simulated data file to test our code.
+The purpose of doing so is that folks can then use this simulated data file to test our code and data processing pipeline and it will have the identical strucutre as the real data.
 
 ## look at the actual raw data to get a sense of the structure ##
 
 ```{r}
-raw <- read_csv("data/processed/day5_post_knots_data.csv")
-head(raw)
+day5_raw <- read_csv("data/processed/day5_post_knots_data.csv")
+head(day5_raw)
 
 # # A tibble: 6 × 14
 #     PID RESPONSE    RT  STIM GROUP PICNOS1 PICNOS2 MATCH ORTN1 ORTN2 PICID1 PICID2   DAY SESSION
 #   <dbl>    <dbl> <dbl> <dbl> <dbl>   <dbl>   <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl> <dbl>   <dbl>
 
-colnames(raw)
+colnames(day5_raw)
 # [1] "PID"      "RESPONSE" "RT"       "STIM"     "GROUP"    "PICNOS1"  "PICNOS2"  "MATCH"    "ORTN1"   
 # [10] "ORTN2"    "PICID1"   "PICID2"   "DAY"      "SESSION" 
+
+day1_raw <- read_csv("data/processed/day1_pre_knots_data.csv")
+head(day1_raw)
+
+raw <- bind_rows(day1_raw, day5_raw)
 ```
+
+Ok, now we have a good idea what the data looks like, we can do some wrangling.
 
 ## wrangle the predicted accuracy data ##
 
 ```{r}
 sim_raw_acc <- acc_sim_data |> 
-  select(PID, GROUP, MATCH, .prediction) |> 
+  select(PID, DAY, GROUP, MATCH, .prediction) |> 
   mutate(RESPONSE = case_when(
     MATCH == 1 & .prediction == 1 ~ 1,  # MATCH 1, correct response
     MATCH == 1 & .prediction == 0 ~ 2,  # MATCH 1, incorrect response
@@ -304,7 +315,7 @@ head(sim_raw_acc)
 
 ```{r}
 sim_raw_rt <- rt_sim_data |> 
-  select(PID, GROUP, MATCH, .prediction) |> 
+  select(PID, DAY, GROUP, MATCH, .prediction) |> 
   rename(RT = .prediction)
 head(sim_raw_rt)
 ```
@@ -326,11 +337,29 @@ sim_raw <- raw |>
          RT = sim_raw_rt$RT)
 head(sim_raw)
 glimpse(sim_raw)
+
+## split by day to resemble LBA modelling
+day1_sim_raw <- raw |>
+  filter(DAY == 1)
+head(day1_sim_raw)
+glimpse(day1_sim_raw)
+
+day5_sim_raw <- raw |>
+  filter(DAY == 5)
+head(day5_sim_raw)
+glimpse(day5_sim_raw)
 ```
+
+Ok, now we should have three dataframes.
+sim_raw - all of the simulated data for days 1 and 5.
+day1_sim_raw - simulated data for day 1.
+day5_sim_raw - simulated data for day 5.
 
 # 6. write out the simulated data #
 
 ```{r}
 write_csv(sim_raw, "data/simulated/sim_raw.csv")
+write_csv(day1_sim_raw, "data/simulated/day1_sim_raw.csv")
+write_csv(day5_sim_raw, "data/simulated/day5_sim_raw.csv")
 ```
 

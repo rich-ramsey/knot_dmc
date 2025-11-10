@@ -6,7 +6,7 @@ We also provide code to run the manifest analysis of reaction time and accuracy 
 
 Samantha Parker, Emily S. Cross, & Richard Ramsey. Evidence accumulation modelling offers new insights into the cognitive mechanisms that underlie linguistic and action-based training.
 
-Preprint: 
+Preprint: https://osf.io/preprints/psyarxiv/tqn6g_v1
 
 # Basic components of the workflow #
 
@@ -44,6 +44,8 @@ Therefore, the raw data and model objects (which include the raw data) are only 
 Please email Samantha Parker (samantha.parker [[at]] students.mq.edu.au) or 
 Richard Ramsey (richard.ramsey [[at]] hest.ethz.ch) and we will share the data and model objects with 
 you, as long as it is for research purposes.
+With this said, for the purposes of code review and computational reproducibility, we provide simulated data, which is based on the structure of the raw data. 
+This means that our data processing workflow can be checked and verified by others even without requesting the original raw data.
 
 # A note on using the R Markdown files listed below #
 
@@ -65,8 +67,6 @@ At the top level of the folder, there are several files.
 - There are several R markdown files:
 
 **effects_lba.Rmd**. This file reads in the main DMC model, wrangles parameter estimates and creates some plots.
-
-**effects_lba_summary.Rmd**. This file reads in the main DMC model, wrangles parameter estimates and creates some summary plots.
 
 **effects_rt_acc.Rmd**. This file reads in the main brms model, wrangles parameter estimates and creates some plots.
 
