@@ -20,15 +20,11 @@ header-includes:
 pkg <- c("papaja", "citr", "tidyverse", "RColorBrewer", "patchwork")
 
 lapply(pkg, library, character.only = TRUE)
-```
 
-```{r analysis-preferences}
 # Seed for random number generation
-set.seed(42)
+set.seed(123)
 knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
-```
 
-```{r plot-settings}
 ## theme settings for ggplot
 theme_set(
   theme_bw() +
@@ -40,12 +36,14 @@ theme_set(
 ## Set the amount of dodge in figures
 pd <- position_dodge(0.7)
 pd2 <- position_dodge(1)
-```
 
-```{r global-chunk-settings}
 ## set the figure options
-knitr::opts_chunk$set(fig.pos='H', out.extra = '', out.height = "67%",
-                      fig.align = "center") # initial version
+# knitr::opts_chunk$set(fig.pos='H', out.extra = '', out.height = "67%",
+#                       fig.align = "center") # initial version
+
+knitr::opts_chunk$set(fig.pos='H', out.extra = '', 
+                      out.width = "1.0\\textwidth",
+                      fig.align = "center")
 ```
 
 <!-- the below two lines directly change the default Figure and Table naming to Supplementary -->
@@ -58,6 +56,24 @@ knitr::opts_chunk$set(fig.pos='H', out.extra = '', out.height = "67%",
 # Supplementary Materials
 
 ## Analysis of Observed Variables
+
+### Descriptive statistics
+
+Supplementary Table 1 reports means and standard errors for accuracy and reaction time data as a function of training day and condition.
+
+(ref:descriptive-caption) Descriptive statistics for accuracy and reaction time data by training day and condition.
+
+```{r descriptive-table}
+day1v5_group <- read_csv("../../data/processed/data1v5_group.csv") |>
+  mutate(day = as_factor(str_remove(day, "Day ")))
+
+apa_table(
+  day1v5_group,
+  caption = "(ref:descriptive-caption)"
+) 
+```
+
+### Inferential statistics
 
 In addition to our evidence accumulation modelling analysis, we also analysed accuracy and reaction time (RT) data separately using multi-level regression. To do so, we used a Bayesian estimation approach to regression (McElreath, 2020). Specifically, we used the R package “brms” to build multi-level regression models (Bürkner, 2017).
 
@@ -102,7 +118,7 @@ apa_table(
 
 \newpage
 
-There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition, accuracy was lower in both the tying and naming conditions, but slighly higher in the combined condition.
+There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition, accuracy was lower in both the tying and naming conditions, but slightly higher in the combined condition.
 
 There also appeared to be relatively small effects of training type on RT (see Supplementary Figure 1B). Inspection of the posterior distribution for the fixed effects of training type revealed values which primarily fell below zero. This suggests that relative to knots that received no training, participants responded faster to knots that received naming, tying and both naming and tying training.
 
@@ -111,19 +127,6 @@ There also appeared to be relatively small effects of training type on RT (see S
 ```{r fixef-plot, fig.cap = "(ref:fixef-caption)"}
 knitr::include_graphics("../../figures/manifest/fixef.jpeg")
 ```
-
-### Day 1, Session 1 Data ###
-
-We also visually checked for any clear and obvious differences between training conditions that could have existed before any training had occurred (see Supplementary Figure 2). 
-In other words, we checked for random pre-training differences in RT and accuracy that might have existed in the Day 1, Session 1 data.
-
-(ref:day1-caption) Accuracy and Reaction Time by Training Type for the Day 1 and Session 1 data (i.e., before any training had occurred). (A) Percent correct on the perceptual discrimination task by training type. (B) Mean reaction time (ms) on the perceptual discrimination task by training type. Black points denote group means, while error bars represent within subjects’ standard errors of the mean. Grey points denote individual subject means.
-
-```{r day1-plot, fig.cap = "(ref:day1-caption)"}
-knitr::include_graphics("../../figures/descriptive/day1_session1_violin_acc_rt.jpeg")
-```
-
-At least in terms of accuracy and RT when analysed separately, there appears to be no clear and obvious pre-training differences between the conditions. Moreover, for RTs, any small numerical differences between conditions are in the opposite direction to the effect of training that we observed in RT, which is that trained conditions became faster than the untrained condition. Therefore, it seems unlikely that pre-existing, chance differences between conditions could account for our findings.
 
 ## LBA Analysis
 
@@ -175,4 +178,44 @@ Supplementary Figures 4 displays the fits of the LBA model to the data in terms 
 
 ```{r model-fit-plot, fig.cap = "(ref:model-fit-caption)"}
 knitr::include_graphics("../../figures/ea/KN_fit.pdf")
+```
+
+### Point and interval summary data
+
+The following supplementary tables provide point and interval estimates for the effects of training across the threshold, drift rate and non-decision time parameters.
+
+(ref:group-lba-table-caption) Point (median) and interval (95% quantile) estimates by training day and condition.
+
+```{r group-lba-table}
+group_q <- read_csv("../../data/summary/group_q.csv") |> 
+  mutate(day = factor(day))
+
+apa_table(
+  group_q,
+  caption = "(ref:group-lba-table-caption)",
+) 
+```
+
+(ref:contrasts-lba-table-caption) Point (median) and interval (95% quantile) estimates for pairwise contrasts between conditions on day 1 and day 5.
+
+```{r contrasts-lba-table}
+contrasts_q <- read_csv("../../data/summary/contrasts_q.csv") |> 
+  mutate(day = factor(day))
+
+apa_table(
+  contrasts_q,
+  caption = "(ref:contrasts-lba-table-caption)",
+  longtable = TRUE
+) 
+```
+
+(ref:day-contrasts-lba-table-caption) Point (median) and interval (95% quantile) estimates for pairwise contrasts between pre-training and post-training across training conditions.
+
+```{r day-contrasts-lba-table}
+day_contrasts_q <- read_csv("../../data/summary/day_contrasts_q.csv")
+
+apa_table(
+  day_contrasts_q,
+  caption = "(ref:day-contrasts-lba-table-caption)"
+) 
 ```

@@ -234,35 +234,15 @@ summary(thresh_day_contrasts)
 
 ## plot condition avg threshold data ##
 
-test out some plots
-
-alpha = day
-
 ```{r}
-p2.1 <- ggplot(thresh_group, aes(x = value, y = training, fill = training, 
-                                 alpha = day, group = interaction(training, day))) +
-  stat_halfeye(.width = .95) +
-  geom_vline(xintercept = 0, color = "darkgrey") +
+p2.1 <- ggplot(thresh_group, aes(x = value, y = training, fill = day)) +
+  stat_halfeye(alpha=0.7, .width = .95) +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Threshold", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
-  scale_alpha_manual(values=c(0.4, 0.9)) +
-  theme(legend.position = "none") +
+  scale_fill_manual(values = c("gray80", "skyblue")) +
+  theme(legend.position = "bottom") +
   labs(title = "Threshold")
 p2.1
-```
-
-facet by day
-
-```{r}
-p2.1b <- ggplot(thresh_group, aes(x = value, y = training, fill = training)) +
-  stat_halfeye(.width = .95, alpha = 0.7) +
-  geom_vline(xintercept = 0, color = "darkgrey") +
-  labs(x = "Threshold", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(legend.position = "none") +
-  facet_wrap(~day, ncol=1) +
-  labs(title = "Threshold")
-p2.1b
 ```
 
 ## plot condition contrasts by day ##
@@ -270,7 +250,7 @@ p2.1b
 ```{r}
 p2.2 <- ggplot(thresh_contrasts, aes(x = value, fill = day)) +
   stat_halfeye(alpha = .7, .width = .95) +
-  geom_vline(xintercept = 0, color = "red", alpha = 5/10) +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Threshold", y = "Density") +
   scale_fill_manual(values = c("gray80", "skyblue")) +
   scale_x_continuous(limits=c(-1.6,1.6), breaks = seq(-1,1)) +
@@ -282,36 +262,23 @@ p2.2
 ## combine condition contrast plots ##
 
 ```{r}
-p2.3 <- (p2.1 | p2.2) +
+p2.3 <- (p2.1| p2.2) +
   plot_annotation(tag_levels = "A") +
-  plot_layout(widths = c(1,2))
+  plot_layout(widths = c(1,2),
+              guides = "collect")
 p2.3
 
 ggsave("figures/ea/day1/day1v5_thresholds_alpha.jpeg",
        width = 14, height = 6, dpi = 800)
 ```
 
-facet
-
-```{r}
-p2.3b <- (p2.1b | p2.2) +
-  plot_annotation(tag_levels = "A") +
-  plot_layout(widths = c(1,2))
-p2.3b
-
-ggsave("figures/ea/day1/day1v5_thresholds_facet.jpeg",
-       width = 14, height = 6, dpi = 800)
-```
-
 ## plot day contrasts by condition ##
 
 ```{r}
-p2.4 <- ggplot(thresh_day_contrasts, aes(x = value, y=training,
-                                         fill=training)) +
-  stat_halfeye(alpha = .7, .width = .95) +
-  geom_vline(xintercept = 0, color = "red", alpha = 5/10) +
+p2.4 <- ggplot(thresh_day_contrasts, aes(x = value, y=training)) +
+  stat_halfeye(alpha = .7, .width = .95, fill = "hotpink") +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Threshold", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
   theme(legend.position = "none") +
   scale_x_continuous(limits=c(-2.2,1), breaks = seq(-2,1)) +
   labs(title = "Contrast: day 5 - day 1")
@@ -331,13 +298,35 @@ ggsave("figures/ea/day1/day1v5_thresholds_day_alpha.jpeg",
 
 p2.6 <- (p2.5 / p2.2) +
   plot_annotation(tag_levels = "A") +
-  plot_layout(axes = "collect")
+  plot_layout(axes = "collect",
+              guides = "collect")
 p2.6
 
 ggsave("figures/ea/day1/day1v5_thresholds_day_cond_alpha.jpeg",
        width = 14, height = 10, dpi = 800)
 ```
 
+## make some table data ##
+
+```{r}
+## group summary
+thresh_group_q <- thresh_group |> 
+  select(day, training, value) |> 
+  median_qi(value)
+thresh_group_q
+
+## condition contrasts
+thresh_contrasts_q <- thresh_contrasts |>
+  select(day, contrast, value) |> 
+  median_qi(value)
+thresh_contrasts_q
+
+## pre vs post contrasts
+thresh_day_contrasts_q <- thresh_day_contrasts |> 
+  select(training, contrast, value) |> 
+  median_qi(value)
+thresh_day_contrasts_q
+```
 
 # 3. Drift rate plots #
 
@@ -409,35 +398,15 @@ summary(drift_day_contrasts)
 
 ## plot condition avg drift rate data ##
 
-test out some plots
-
-alpha = day
-
 ```{r}
-p3.1 <- ggplot(drift_group, aes(x = value, y = training, fill = training, 
-                                 alpha = day, group = interaction(training, day))) +
-  stat_halfeye(.width = .95) +
-  geom_vline(xintercept = 0, color = "darkgrey") +
+p3.1 <- ggplot(drift_group, aes(x = value, y = training, fill = day)) +
+  stat_halfeye(alpha=0.7, .width = .95) +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Drift rate", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
-  scale_alpha_manual(values=c(0.4, 0.8)) +
-  theme(legend.position = "none") +
+  scale_fill_manual(values = c("gray80", "skyblue")) +
+  theme(legend.position = "bottom") +
   labs(title = "Drift rate")
 p3.1
-```
-
-facet by day
-
-```{r}
-p3.1b <- ggplot(drift_group, aes(x = value, y = training, fill = training)) +
-  stat_halfeye(.width = .95, alpha = 0.7) +
-  geom_vline(xintercept = 0, color = "darkgrey") +
-  labs(x = "Drift rate", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(legend.position = "none") +
-  facet_wrap(~day, ncol=1) +
-  labs(title = "Drift rate")
-p3.1b
 ```
 
 ## plot contrasts ##
@@ -445,7 +414,7 @@ p3.1b
 ```{r}
 p3.2 <- ggplot(drift_contrasts, aes(x = value, fill = day)) +
   stat_halfeye(alpha = .7, .width = .95) +
-  geom_vline(xintercept = 0, color = "red", alpha = 5/10) +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Drift rate", y = "Density") +
   scale_fill_manual(values = c("gray80", "skyblue")) +
   scale_x_continuous(limits=c(-1.5,2.3), breaks = seq(-1,2,1)) +
@@ -461,34 +430,21 @@ alpha version
 ```{r}
 p3.3 <- (p3.1 | p3.2) +
   plot_annotation(tag_levels = "A") +
-  plot_layout(widths = c(1,2))
+  plot_layout(widths = c(1,2),
+              guides = "collect")
 p3.3
 
 ggsave("figures/ea/day1/day1v5_drift_rate_alpha.jpeg",
        width = 14, height = 6, dpi = 800)
 ```
 
-facet version
-
-```{r}
-p3.3b <- (p3.1b | p3.2) +
-  plot_annotation(tag_levels = "A") +
-  plot_layout(widths = c(1,2))
-p3.3b
-
-ggsave("figures/ea/day1/day1v5_drift_rate_facet.jpeg",
-       width = 14, height = 6, dpi = 800)
-```
-
 ## plot day contrasts by condition ##
 
 ```{r}
-p3.4 <- ggplot(drift_day_contrasts, aes(x = value, y=training,
-                                         fill=training)) +
-  stat_halfeye(alpha = .7, .width = .95) +
-  geom_vline(xintercept = 0, color = "red", alpha = 5/10) +
+p3.4 <- ggplot(drift_day_contrasts, aes(x = value, y=training)) +
+  stat_halfeye(alpha = .7, .width = .95, fill = "hotpink") +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Drift rate", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
   theme(legend.position = "none") +
   scale_x_continuous(limits=c(-2,2), breaks = seq(-2,2)) +
   labs(title = "Contrast: day 5 - day 1")
@@ -508,11 +464,34 @@ ggsave("figures/ea/day1/day1v5_drift_day_alpha.jpeg",
 
 p3.6 <- (p3.5 / p3.2) +
   plot_annotation(tag_levels = "A") +
-  plot_layout(axes = "collect")
+  plot_layout(axes = "collect",
+              guides = "collect")
 p3.6
 
 ggsave("figures/ea/day1/day1v5_drift_day_cond_alpha.jpeg",
        width = 14, height = 10, dpi = 800)
+```
+
+## make some table data ##
+
+```{r}
+## group summary
+drift_group_q <- drift_group |> 
+  select(day, training, value) |> 
+  median_qi(value)
+drift_group_q
+
+## condition contrasts
+drift_contrasts_q <- drift_contrasts |>
+  select(day, contrast, value) |> 
+  median_qi(value)
+drift_contrasts_q
+
+## pre vs post contrasts
+drift_day_contrasts_q <- drift_day_contrasts |> 
+  select(training, contrast, value) |> 
+  median_qi(value)
+drift_day_contrasts_q
 ```
 
 # 4. Non-decision time plots #
@@ -582,35 +561,15 @@ summary(ndt_day_contrasts)
 
 ## plot condition avg ndt rate ##
 
-test out some plots
-
-alpha = day
-
 ```{r}
-p4.1 <- ggplot(ndt_group, aes(x = value, y = training, fill = training, 
-                                 alpha = day, group = interaction(training, day))) +
-  stat_halfeye(.width = .95) +
-  geom_vline(xintercept = 0, color = "darkgrey") +
+p4.1 <- ggplot(ndt_group, aes(x = value, y = training, fill = day)) +
+  stat_halfeye(alpha=0.7, .width = .95) +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Non-decision time", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
-  scale_alpha_manual(values=c(0.4, 0.8)) +
-  theme(legend.position = "none") +
+  scale_fill_manual(values = c("gray80", "skyblue")) +
+  theme(legend.position = "bottom") +
   labs(title = "Non-decision time")
 p4.1
-```
-
-facet by day
-
-```{r}
-p4.1b <- ggplot(ndt_group, aes(x = value, y = training, fill = training)) +
-  stat_halfeye(.width = .95, alpha = 0.7) +
-  geom_vline(xintercept = 0, color = "darkgrey") +
-  labs(x = "Non-decision time", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(legend.position = "none") +
-  facet_wrap(~day, ncol=1) +
-  labs(title = "Non-decision time")
-p4.1b
 ```
 
 ## plot contrasts ##
@@ -618,7 +577,7 @@ p4.1b
 ```{r}
 p4.2 <- ggplot(ndt_contrasts, aes(x = value, fill = day)) +
   stat_halfeye(alpha = .7, .width = .95) +
-  geom_vline(xintercept = 0, color = "red", alpha = 5/10) +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Non-decision time", y = "Density") +
   scale_fill_manual(values = c("gray80", "skyblue")) +
   scale_x_continuous(limits=c(-0.5,0.5), breaks = seq(-0.5,0.5,0.5)) +
@@ -629,39 +588,24 @@ p4.2
 
 ## combine plots ##
 
-alpha version
-
 ```{r}
 p4.3 <- (p4.1 | p4.2) +
   plot_annotation(tag_levels = "A") +
-  plot_layout(widths = c(1,2))
+  plot_layout(widths = c(1,2),
+              guides = "collect")
 p4.3
 
 ggsave("figures/ea/day1/day1v5_ndt_alpha.jpeg",
        width = 14, height = 6, dpi = 800)
 ```
  
-facet version
-
-```{r}
-p4.3b <- (p4.1b | p4.2) +
-  plot_annotation(tag_levels = "A") +
-  plot_layout(widths = c(1,2))
-p4.3b
-
-ggsave("figures/ea/day1/day1v5_ndt_facet.jpeg",
-       width = 14, height = 6, dpi = 800)
-```
-
 ## plot day contrasts by condition ##
 
 ```{r}
-p4.4 <- ggplot(ndt_day_contrasts, aes(x = value, y=training,
-                                         fill=training)) +
-  stat_halfeye(alpha = .7, .width = .95) +
-  geom_vline(xintercept = 0, color = "red", alpha = 5/10) +
+p4.4 <- ggplot(ndt_day_contrasts, aes(x = value, y=training)) +
+  stat_halfeye(alpha = .7, .width = .95, fill = "hotpink") +
+  geom_vline(xintercept = 0, color = "darkgrey", linetype = "dashed", alpha = 7/10) +
   labs(x = "Non-decision time", y = "Training Condition") +
-  scale_fill_brewer(palette = "Dark2") +
   theme(legend.position = "none") +
   scale_x_continuous(limits=c(-0.5,0.5), breaks = seq(-0.5,0.5,0.25)) +
   labs(title = "Contrast: day 5 - day 1")
@@ -681,10 +625,66 @@ ggsave("figures/ea/day1/day1v5_ndt_day_alpha.jpeg",
 
 p4.6 <- (p4.5 / p4.2) +
   plot_annotation(tag_levels = "A") +
-  plot_layout(axes = "collect")
+  plot_layout(axes = "collect",
+              guides = "collect")
 p4.6
 
 ggsave("figures/ea/day1/day1v5_ndt_day_cond_alpha.jpeg",
        width = 14, height = 10, dpi = 800)
+```
+
+## make some table data ##
+
+```{r}
+## group summary
+ndt_group_q <- ndt_group |> 
+  select(day, training, value) |> 
+  median_qi(value)
+ndt_group_q
+
+## condition contrasts
+ndt_contrasts_q <- ndt_contrasts |>
+  select(day, contrast, value) |> 
+  median_qi(value)
+ndt_contrasts_q
+
+## pre vs post contrasts
+ndt_day_contrasts_q <- ndt_day_contrasts |> 
+  select(training, contrast, value) |> 
+  median_qi(value)
+ndt_day_contrasts_q
+```
+
+# 5. Make combined group-level table data ##
+
+Combine data for all parameters to make the tables more efficient and compact.
+
+```{r}
+group_q <- bind_rows(thresh_group_q, drift_group_q, ndt_group_q) |>
+  mutate(parameter = rep(c("threshold", "drift rate", "non-decision time"), each=8)) |> 
+  relocate(parameter, .before = everything()) |> 
+  select(-c(.width, .point, .interval))
+group_q
+
+contrasts_q <- bind_rows(thresh_contrasts_q, drift_contrasts_q, ndt_contrasts_q) |>
+  mutate(parameter = rep(c("threshold", "drift rate", "non-decision time"), each=12)) |> 
+  relocate(parameter, .before = everything()) |> 
+  select(-c(.width, .point, .interval))
+contrasts_q
+
+day_contrasts_q <- bind_rows(thresh_day_contrasts_q, drift_day_contrasts_q, ndt_day_contrasts_q) |>
+  mutate(parameter = rep(c("threshold", "drift rate", "non-decision time"), each=4)) |> 
+  relocate(parameter, .before = everything()) |> 
+  select(-c(.width, .point, .interval))
+day_contrasts_q
+  
+```
+
+save out the table data
+
+```{r}
+write_csv(group_q, "data/summary/group_q.csv")
+write_csv(contrasts_q, "data/summary/contrasts_q.csv")
+write_csv(day_contrasts_q, "data/summary/day_contrasts_q.csv")
 ```
 

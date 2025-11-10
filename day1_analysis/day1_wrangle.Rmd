@@ -218,7 +218,7 @@ plot rt
 p5.2 <- ggplot(data_s_rt_pid, aes(x = GROUP, y = mean_rt, 
                                fill = GROUP, colour = GROUP)) +
   geom_jitter(position=position_jitterdodge(dodge.width =1), 
-              size = 2.5, colour="grey") +
+              linewidth = 2.5, colour="grey") +
   geom_violin(alpha = 0.5, position=pd2) +
   geom_errorbar(data = data_s_rt_g, aes(ymin=mean_rt-sem_rt,
                                         ymax=mean_rt+sem_rt), 

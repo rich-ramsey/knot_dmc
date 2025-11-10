@@ -285,3 +285,86 @@ plot_rain <- function(
 
   return(p)
 }
+# Create an LBA schematic plot - single panel with two accumulators
+library(tidyverse)
+
+# Single panel with two accumulators
+create_lba_schematic <- function() {
+  # Set common end time (both arrows end at same x position)
+  common_end_time <- 1.8
+  
+  # Accumulator 1 parameters
+  drift1 <- 0.4
+  start1 <- 0.2
+  end_evidence1 <- start1 + drift1 * common_end_time
+  
+  # Accumulator 2 parameters
+  drift2 <- 0.2
+  start2 <- 0.2
+  end_evidence2 <- start2 + drift2 * common_end_time
+  
+  # Calculate arrow start point for accumulator 2 (very short distance before end)
+  arrow_start_distance <- 0.05
+  acc2_arrow_start_x <- common_end_time - arrow_start_distance
+  acc2_arrow_start_y <- start2 + drift2 * acc2_arrow_start_x
+  
+  ggplot() +
+    # Starting point region (to the left of y-axis)
+    annotate("rect", xmin = -0.35, xmax = -0.05, ymin = 0, ymax = 0.35,
+             fill = "steelblue", alpha = 0.3) +
+    # Axes with arrows
+    geom_segment(aes(x = 0, y = 0, xend = 0, yend = 1.15), 
+                 linewidth = 0.7, color = "black",
+                 arrow = arrow(length = unit(0.3, "cm"), type = "closed")) +
+    geom_segment(aes(x = 0, y = 0, xend = 2.7, yend = 0), 
+                 linewidth = 0.7, color = "black",
+                 arrow = arrow(length = unit(0.3, "cm"), type = "closed")) +
+    # Threshold line (starting at x=0)
+    geom_segment(aes(x = 0, y = 1, xend = 2.7, yend = 1), 
+                 linetype = "dashed", linewidth = 0.8, color = "black") +
+    # Accumulator 1 line with arrow
+    geom_segment(aes(x = 0, y = start1, xend = common_end_time, yend = end_evidence1),
+                 linewidth = 1.2, color = "#1B9E77FF", linetype = "solid",
+                 arrow = arrow(length = unit(0.3, "cm"), type = "closed")) +
+    # Accumulator 2 - dotted line WITHOUT arrow
+    geom_segment(aes(x = 0, y = start2, xend = common_end_time, yend = end_evidence2),
+                 linewidth = 1.2, color = "#D95F02FF", linetype = "dotted") +
+    # Accumulator 2 - very short solid arrow at the end
+    geom_segment(aes(x = acc2_arrow_start_x, y = acc2_arrow_start_y, 
+                     xend = common_end_time, yend = end_evidence2),
+                 linewidth = 1.2, color = "#D95F02FF", linetype = "solid",
+                 arrow = arrow(length = unit(0.3, "cm"), type = "closed")) +
+    # Manual axis labels as annotations
+    annotate("text", x = -0.15, y = 0.6, label = "Evidence", 
+             size = 4, fontface = "bold", angle = 90) +
+    annotate("text", x = 1.3, y = -0.1, label = "Time", 
+             size = 4, fontface = "bold") +
+    # Parameter labels (bold + italic)
+    annotate("text", x = -0.2, y = 0.175, label = "Start point (A)", 
+             size = 4, fontface = "bold.italic", angle = 90) +
+    annotate("text", x = 1.5, y = 1.05, label = "Threshold (b)", 
+             size = 4, fontface = "bold.italic", hjust = 1) +
+    annotate("text", x = common_end_time * 0.4, y = start1 + drift1 * common_end_time * 0.4 + 0.2, 
+             label = "Drift rate (v)", size = 4, fontface = "bold.italic") +
+    # Accumulator labels at arrow tips
+    annotate("text", x = common_end_time + 0.05, y = end_evidence1, 
+             label = "Accumulator 1", size = 4, fontface = "bold.italic", 
+             color = "black", hjust = 0) +
+    annotate("text", x = common_end_time + 0.05, y = end_evidence2, 
+             label = "Accumulator 2", size = 4, fontface = "bold.italic", 
+             color = "black", hjust = 0) +
+    # Styling
+    scale_x_continuous(breaks = NULL, limits = c(-0.5, 2.8)) +
+    scale_y_continuous(breaks = NULL, limits = c(-0.1, 1.2)) +
+    labs(x = NULL, y = NULL) +
+    theme_minimal(base_size = 12) +
+    theme(
+      panel.grid = element_blank(),
+      axis.ticks = element_blank(),
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+      plot.margin = margin(0, 0, 0, 0)
+    )
+}
+
+# Create the plot
+create_lba_schematic()

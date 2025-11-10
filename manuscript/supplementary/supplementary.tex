@@ -1,10 +1,12 @@
 % Options for packages loaded elsewhere
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{hyphens}{url}
-%
 \documentclass[
+  english,
   man,floatsintext]{apa6}
+\usepackage{xcolor}
 \usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
@@ -35,24 +37,6 @@
 }{% if KOMA class
   \KOMAoptions{parskip=half}}
 \makeatother
-\usepackage{xcolor}
-\usepackage{graphicx}
-\makeatletter
-\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
-\makeatother
-% Scale images if necessary, so that they will not overflow the page
-% margins by default, and it is still possible to overwrite the defaults
-% using explicit options in \includegraphics[width, height, ...]{}
-\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
-% Set default figure placement to htbp
-\makeatletter
-\def\fps@figure{htbp}
-\makeatother
-\setlength{\emergencystretch}{3em} % prevent overfull lines
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 % Make \paragraph and \subparagraph free-standing
 \makeatletter
 \ifx\paragraph\undefined\else
@@ -76,15 +60,35 @@
   \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
 \fi
 \makeatother
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
 \ifLuaTeX
 \usepackage[bidi=basic]{babel}
 \else
 \usepackage[bidi=default]{babel}
 \fi
-\babelprovide[main,import]{english}
 % get rid of language-specific shorthands (see #6817):
 \let\LanguageShortHands\languageshorthands
 \def\languageshorthands#1{}
+\ifLuaTeX
+  \usepackage[english]{selnolig} % disable illegal ligatures
+\fi
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 % Manuscript styling
 \usepackage{upgreek}
 \captionsetup{font=singlespacing,justification=justified}
@@ -155,9 +159,6 @@
 \linenumbers
 \usepackage{csquotes}
 \raggedbottom
-\ifLuaTeX
-  \usepackage{selnolig}  % disable illegal ligatures
-\fi
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
@@ -182,6 +183,49 @@
 \section{Supplementary Materials}\label{supplementary-materials}
 
 \subsection{Analysis of Observed Variables}\label{analysis-of-observed-variables}
+
+\subsubsection{Descriptive statistics}\label{descriptive-statistics}
+
+Supplementary Table 1 reports means and standard errors for accuracy and reaction time data as a function of training day and condition.
+
+
+
+\begin{table}[tbp]
+
+\begin{center}
+\begin{threeparttable}
+
+\caption{\label{tab:descriptive-table}Descriptive statistics for accuracy and reaction time data by training day and condition.}
+
+\begin{tabular}{lllll}
+\toprule
+variable & \multicolumn{1}{c}{day} & \multicolumn{1}{c}{condition} & \multicolumn{1}{c}{mean} & \multicolumn{1}{c}{sem}\\
+\midrule
+Accuracy (\% correct) & 1 & untrained & 87.64 & 7.77\\
+Accuracy (\% correct) & 1 & name & 86.67 & 8.02\\
+Accuracy (\% correct) & 1 & tie & 85.51 & 8.31\\
+Accuracy (\% correct) & 1 & both & 84.23 & 8.60\\
+Accuracy (\% correct) & 5 & untrained & 87.36 & 7.84\\
+Accuracy (\% correct) & 5 & name & 83.76 & 8.71\\
+Accuracy (\% correct) & 5 & tie & 85.14 & 8.40\\
+Accuracy (\% correct) & 5 & both & 88.89 & 7.42\\
+Reaction time (ms) & 1 & untrained & 1,237.01 & 77.49\\
+Reaction time (ms) & 1 & name & 1,315.91 & 85.74\\
+Reaction time (ms) & 1 & tie & 1,279.28 & 94.47\\
+Reaction time (ms) & 1 & both & 1,213.33 & 87.34\\
+Reaction time (ms) & 5 & untrained & 1,139.32 & 81.24\\
+Reaction time (ms) & 5 & name & 1,054.54 & 81.90\\
+Reaction time (ms) & 5 & tie & 1,119.05 & 83.95\\
+Reaction time (ms) & 5 & both & 1,081.95 & 81.09\\
+\bottomrule
+\end{tabular}
+
+\end{threeparttable}
+\end{center}
+
+\end{table}
+
+\subsubsection{Inferential statistics}\label{inferential-statistics}
 
 In addition to our evidence accumulation modelling analysis, we also analysed accuracy and reaction time (RT) data separately using multi-level regression. To do so, we used a Bayesian estimation approach to regression (McElreath, 2020). Specifically, we used the R package ``brms'' to build multi-level regression models (Bürkner, 2017).
 
@@ -234,7 +278,7 @@ Reaction time & normal (6.68,0.5) & Intercept & \\
 
 \newpage
 
-There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition, accuracy was lower in both the tying and naming conditions, but slighly higher in the combined condition.
+There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition, accuracy was lower in both the tying and naming conditions, but slightly higher in the combined condition.
 
 There also appeared to be relatively small effects of training type on RT (see Supplementary Figure 1B). Inspection of the posterior distribution for the fixed effects of training type revealed values which primarily fell below zero. This suggests that relative to knots that received no training, participants responded faster to knots that received naming, tying and both naming and tying training.
 
@@ -242,30 +286,12 @@ There also appeared to be relatively small effects of training type on RT (see S
 
 \begin{figure}[H]
 
-{\centering \includegraphics[height=0.67\textheight,]{../../figures/manifest/fixef} 
+{\centering \includegraphics[width=1.0\textwidth,]{../../figures/manifest/fixef} 
 
 }
 
 \caption{Fixed Effects for the Most Complex Model for (A) Accuracy and (B) Reaction Time. Points represent the median value of the posterior distribution for that estimate, the thicker line represents 66th percentile, while the thinner line is the 95th percentile of the distribution. The untrained condition was the reference group in these regression models.}\label{fig:fixef-plot}
 \end{figure}
-
-\subsubsection{Day 1, Session 1 Data}\label{day-1-session-1-data}
-
-We also visually checked for any clear and obvious differences between training conditions that could have existed before any training had occurred (see Supplementary Figure 2).
-In other words, we checked for random pre-training differences in RT and accuracy that might have existed in the Day 1, Session 1 data.
-
-
-
-\begin{figure}[H]
-
-{\centering \includegraphics[height=0.67\textheight,]{../../figures/descriptive/day1_session1_violin_acc_rt} 
-
-}
-
-\caption{Accuracy and Reaction Time by Training Type for the Day 1 and Session 1 data (i.e., before any training had occurred). (A) Percent correct on the perceptual discrimination task by training type. (B) Mean reaction time (ms) on the perceptual discrimination task by training type. Black points denote group means, while error bars represent within subjects' standard errors of the mean. Grey points denote individual subject means.}\label{fig:day1-plot}
-\end{figure}
-
-At least in terms of accuracy and RT when analysed separately, there appears to be no clear and obvious pre-training differences between the conditions. Moreover, for RTs, any small numerical differences between conditions are in the opposite direction to the effect of training that we observed in RT, which is that trained conditions became faster than the untrained condition. Therefore, it seems unlikely that pre-existing, chance differences between conditions could account for our findings.
 
 \subsection{LBA Analysis}\label{lba-analysis}
 
@@ -321,7 +347,7 @@ Plots of prior and posterior distributions revealed strong updating (i.e., poste
 
 \begin{figure}[H]
 
-{\centering \includegraphics[height=0.67\textheight,]{../../figures/ea/pp} 
+{\centering \includegraphics[width=1.0\textwidth,]{../../figures/ea/pp} 
 
 }
 
@@ -336,12 +362,152 @@ Supplementary Figures 4 displays the fits of the LBA model to the data in terms 
 
 \begin{figure}[H]
 
-{\centering \includegraphics[height=0.67\textheight,]{../../figures/ea/KN_fit} 
+{\centering \includegraphics[width=1.0\textwidth,]{../../figures/ea/KN_fit} 
 
 }
 
 \caption{Cumulative distribution functions for data (thick lines) and fits (line grey lines) of the LBA model. Each panel contains results for both same and different responses at each level of stimulus (match and mismatch) and training type (untrained, name, tie, both). Symbols mark the 10th, 30th, 50th, 70th and 90th percentile (solid for average fits, open for data). Grey points are 500 percentile estimates from fits for random draws from posterior samples; the grey line and black solid points are the average of these 500 fits.}\label{fig:model-fit-plot}
 \end{figure}
+
+\subsubsection{Point and interval summary data}\label{point-and-interval-summary-data}
+
+The following supplementary tables provide point and interval estimates for the effects of training across the threshold, drift rate and non-decision time parameters.
+
+
+
+\begin{table}[tbp]
+
+\begin{center}
+\begin{threeparttable}
+
+\caption{\label{tab:group-lba-table}Point (median) and interval (95\% quantile) estimates by training day and condition.}
+
+\begin{tabular}{llllll}
+\toprule
+parameter & \multicolumn{1}{c}{day} & \multicolumn{1}{c}{training} & \multicolumn{1}{c}{value} & \multicolumn{1}{c}{.lower} & \multicolumn{1}{c}{.upper}\\
+\midrule
+threshold & 1 & untrained & 1.45 & 1.27 & 1.67\\
+threshold & 1 & name & 2.46 & 2.26 & 2.66\\
+threshold & 1 & tie & 2.09 & 1.84 & 2.33\\
+threshold & 1 & both & 1.95 & 1.74 & 2.17\\
+threshold & 5 & untrained & 1.83 & 1.70 & 1.97\\
+threshold & 5 & name & 0.76 & 0.64 & 0.88\\
+threshold & 5 & tie & 0.68 & 0.57 & 0.79\\
+threshold & 5 & both & 0.64 & 0.53 & 0.75\\
+drift rate & 1 & untrained & 2.74 & 2.47 & 3.01\\
+drift rate & 1 & name & 2.25 & 2.03 & 2.48\\
+drift rate & 1 & tie & 2.42 & 2.13 & 2.71\\
+drift rate & 1 & both & 2.25 & 2.00 & 2.52\\
+drift rate & 5 & untrained & 2.08 & 1.85 & 2.31\\
+drift rate & 5 & name & 2.30 & 2.01 & 2.60\\
+drift rate & 5 & tie & 2.39 & 2.13 & 2.67\\
+drift rate & 5 & both & 3.12 & 2.74 & 3.53\\
+non-decision time & 1 & untrained & 0.49 & 0.45 & 0.53\\
+non-decision time & 1 & name & 0.31 & 0.27 & 0.36\\
+non-decision time & 1 & tie & 0.37 & 0.31 & 0.43\\
+non-decision time & 1 & both & 0.39 & 0.34 & 0.44\\
+non-decision time & 5 & untrained & 0.26 & 0.22 & 0.29\\
+non-decision time & 5 & name & 0.50 & 0.47 & 0.53\\
+non-decision time & 5 & tie & 0.51 & 0.48 & 0.54\\
+non-decision time & 5 & both & 0.52 & 0.50 & 0.55\\
+\bottomrule
+\end{tabular}
+
+\end{threeparttable}
+\end{center}
+
+\end{table}
+
+
+
+\begin{center}
+\begin{ThreePartTable}
+
+\begin{longtable}{llllll}\noalign{\getlongtablewidth\global\LTcapwidth=\longtablewidth}
+\caption{\label{tab:contrasts-lba-table}Point (median) and interval (95\% quantile) estimates for pairwise contrasts between conditions on day 1 and day 5.}\\
+\toprule
+parameter & \multicolumn{1}{c}{day} & \multicolumn{1}{c}{contrast} & \multicolumn{1}{c}{value} & \multicolumn{1}{c}{.lower} & \multicolumn{1}{c}{.upper}\\
+\midrule
+\endfirsthead
+\caption*{\normalfont{Table \ref{tab:contrasts-lba-table} continued}}\\
+\toprule
+parameter & \multicolumn{1}{c}{day} & \multicolumn{1}{c}{contrast} & \multicolumn{1}{c}{value} & \multicolumn{1}{c}{.lower} & \multicolumn{1}{c}{.upper}\\
+\midrule
+\endhead
+threshold & 1 & name - untrained & 1.01 & 0.73 & 1.27\\
+threshold & 1 & tie - untrained & 0.63 & 0.30 & 0.95\\
+threshold & 1 & both - untrained & 0.50 & 0.22 & 0.78\\
+threshold & 1 & both - name & -0.51 & -0.81 & -0.21\\
+threshold & 1 & both - tie & -0.13 & -0.47 & 0.19\\
+threshold & 1 & tie - name & -0.38 & -0.67 & -0.07\\
+threshold & 5 & name - untrained & -1.08 & -1.25 & -0.89\\
+threshold & 5 & tie - untrained & -1.15 & -1.33 & -0.98\\
+threshold & 5 & both - untrained & -1.19 & -1.38 & -1.03\\
+threshold & 5 & both - name & -0.12 & -0.29 & 0.05\\
+threshold & 5 & both - tie & -0.04 & -0.19 & 0.11\\
+threshold & 5 & tie - name & -0.08 & -0.24 & 0.09\\
+drift rate & 1 & name - untrained & -0.49 & -0.83 & -0.13\\
+drift rate & 1 & tie - untrained & -0.31 & -0.71 & 0.08\\
+drift rate & 1 & both - untrained & -0.48 & -0.86 & -0.10\\
+drift rate & 1 & both - name & 0.00 & -0.34 & 0.35\\
+drift rate & 1 & both - tie & -0.17 & -0.56 & 0.23\\
+drift rate & 1 & tie - name & 0.17 & -0.20 & 0.54\\
+drift rate & 5 & name - untrained & 0.22 & -0.15 & 0.60\\
+drift rate & 5 & tie - untrained & 0.31 & -0.04 & 0.67\\
+drift rate & 5 & both - untrained & 1.04 & 0.61 & 1.51\\
+drift rate & 5 & both - name & 0.83 & 0.33 & 1.32\\
+drift rate & 5 & both - tie & 0.73 & 0.26 & 1.20\\
+drift rate & 5 & tie - name & 0.09 & -0.30 & 0.49\\
+non-decision time & 1 & name - untrained & -0.18 & -0.24 & -0.12\\
+non-decision time & 1 & tie - untrained & -0.12 & -0.19 & -0.05\\
+non-decision time & 1 & both - untrained & -0.10 & -0.17 & -0.04\\
+non-decision time & 1 & both - name & 0.08 & 0.01 & 0.15\\
+non-decision time & 1 & both - tie & 0.02 & -0.06 & 0.10\\
+non-decision time & 1 & tie - name & 0.06 & -0.01 & 0.13\\
+non-decision time & 5 & name - untrained & 0.24 & 0.19 & 0.29\\
+non-decision time & 5 & tie - untrained & 0.25 & 0.20 & 0.30\\
+non-decision time & 5 & both - untrained & 0.27 & 0.22 & 0.31\\
+non-decision time & 5 & both - name & 0.02 & -0.02 & 0.07\\
+non-decision time & 5 & both - tie & 0.02 & -0.02 & 0.06\\
+non-decision time & 5 & tie - name & 0.01 & -0.04 & 0.05\\
+\bottomrule
+\end{longtable}
+
+\end{ThreePartTable}
+\end{center}
+
+
+
+\begin{table}[tbp]
+
+\begin{center}
+\begin{threeparttable}
+
+\caption{\label{tab:day-contrasts-lba-table}Point (median) and interval (95\% quantile) estimates for pairwise contrasts between pre-training and post-training across training conditions.}
+
+\begin{tabular}{llllll}
+\toprule
+parameter & \multicolumn{1}{c}{training} & \multicolumn{1}{c}{contrast} & \multicolumn{1}{c}{value} & \multicolumn{1}{c}{.lower} & \multicolumn{1}{c}{.upper}\\
+\midrule
+threshold & untrained & 5 - 1 & 0.38 & 0.15 & 0.59\\
+threshold & name & 5 - 1 & -1.71 & -1.93 & -1.48\\
+threshold & tie & 5 - 1 & -1.41 & -1.68 & -1.14\\
+threshold & both & 5 - 1 & -1.31 & -1.56 & -1.07\\
+drift rate & untrained & 5 - 1 & -0.66 & -1.02 & -0.30\\
+drift rate & name & 5 - 1 & 0.05 & -0.32 & 0.42\\
+drift rate & tie & 5 - 1 & -0.03 & -0.42 & 0.36\\
+drift rate & both & 5 - 1 & 0.87 & 0.40 & 1.34\\
+non-decision time & untrained & 5 - 1 & -0.23 & -0.29 & -0.18\\
+non-decision time & name & 5 - 1 & 0.19 & 0.13 & 0.25\\
+non-decision time & tie & 5 - 1 & 0.14 & 0.08 & 0.20\\
+non-decision time & both & 5 - 1 & 0.14 & 0.08 & 0.19\\
+\bottomrule
+\end{tabular}
+
+\end{threeparttable}
+\end{center}
+
+\end{table}
 
 
 \end{document}

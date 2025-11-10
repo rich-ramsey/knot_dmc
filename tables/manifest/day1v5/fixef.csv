@@ -1,0 +1,15 @@
+dv,term,value,.lower,.upper
+accuracy,name,-0.05,-0.42,0.33
+accuracy,tie,-0.12,-0.49,0.26
+accuracy,both,-0.18,-0.54,0.2
+accuracy,day5,0.04,-0.31,0.4
+accuracy,name*day5,-0.2,-0.68,0.29
+accuracy,tie*day5,-0.04,-0.52,0.43
+accuracy,both*day5,0.34,-0.15,0.86
+reaction time,name,0.08,0.01,0.15
+reaction time,tie,0.03,-0.05,0.1
+reaction time,both,-0.05,-0.13,0.02
+reaction time,day5,-0.15,-0.31,0.01
+reaction time,name*day5,-0.2,-0.34,-0.08
+reaction time,tie*day5,-0.07,-0.17,0.03
+reaction time,both*day5,-0.03,-0.12,0.06

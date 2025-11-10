@@ -15,19 +15,20 @@ This is the main data wrangling file for the analysis of knots data from Cross e
 
 This script loads the processed data, wrangles the data, makes summary plots and writes out dataframes that are appropriate for the different types of analyses that will follow in the modelling scripts.
 
-# load libraries #
-
-```{r load-pkg}
-pkg <- c("tidyverse", "RColorBrewer", "patchwork")
+```{r setup}
+pkg <- c(
+  "tidyverse",
+  "RColorBrewer",
+  "patchwork",
+  "styler",
+  "gghalves",
+  "ggdist",
+  "janitor"
+)
 
 lapply(pkg, library, character.only = TRUE)
-```
 
-# plot settings #
-
-theme settings for ggplot
-
-```{r, eval = F}
+## theme settings for ggplot
 theme_set(
   theme_bw() +
     theme(text = element_text(size = 18, face = "bold"), 
@@ -38,6 +39,9 @@ theme_set(
 ## Set the amount of dodge in figures
 pd <- position_dodge(0.7)
 pd2 <- position_dodge(1)
+
+## custom wrangle and plotting functions
+source("custom_functions/wrangle_plot.R")
 ```
 
 # 1. load the data #
@@ -59,13 +63,16 @@ Note - the simulated data resemble the real data, but they will of course produc
 # head(raw)
 ```
 
-
-
-check only day 5, session 2
+do some checks 
 
 ```{r}
+## only day 5, session 2
 raw %>%
   distinct(DAY, SESSION)
+
+## 18 PIDs, PID 3 and 17 did not complete day 5, session 2 
+raw %>% 
+  distinct(PID)
 ```
 
 # 2. do some wrangling #
@@ -76,17 +83,21 @@ rename group.
 create factors.
 
 ```{r}
-data <- raw %>% 
-  select(PID, GROUP, MATCH, RESPONSE, RT) %>% 
-  mutate(ACC = if_else(MATCH == RESPONSE, 1, 0)) %>% 
-  mutate(GROUP = case_when(
-    GROUP == 1 ~ "name",
-    GROUP == 2 ~ "tie",
-    GROUP == 3 ~ "both",
-    .default = "untrained")) %>% 
-  mutate(PID = factor(PID),
-         GROUP = factor(GROUP,
-                        levels = c("untrained", "name", "tie", "both")))
+data <- raw %>%
+  select(PID, GROUP, MATCH, RESPONSE, RT) %>%
+  mutate(ACC = if_else(MATCH == RESPONSE, 1, 0)) %>%
+  mutate(
+    GROUP = case_when(
+      GROUP == 1 ~ "name",
+      GROUP == 2 ~ "tie",
+      GROUP == 3 ~ "both",
+      .default = "untrained"
+    )
+  ) %>%
+  mutate(
+    PID = factor(PID),
+    GROUP = factor(GROUP, levels = c("untrained", "name", "tie", "both"))
+  )
 head(data)
 glimpse(data)
 ```
@@ -152,111 +163,284 @@ trials_pid_cond %>%
 
 ## accuracy ##
 
-at the pid level
-
 ```{r}
-data_s_pid <- data %>% 
-  group_by(PID, GROUP) %>% 
-  summarise(sum_acc = sum(ACC), 
-            mean_acc = mean(ACC, na.rm = TRUE) * 100, 
-            sd_acc = sd(ACC, na.rm = TRUE) * 100)
-head(data_s_pid)
+acc_ind <- summarise_individual(
+  data,
+  id_var = PID,
+  group_vars = "GROUP",
+  response_var = ACC,
+  scale = 100
+)
+acc_ind
+
+acc_group <- summarise_group(
+  data,
+  id_var = PID,
+  group_vars = "GROUP",
+  response_var = ACC,
+  scale = 100
+)
+acc_group
 ```
 
-at the group level
+## rt ##
 
 ```{r}
-data_s_g <- data %>% 
-  group_by(GROUP) %>% 
-  summarise(n=length(unique(PID)),
-            sum_acc = sum(ACC), 
-            mean_acc = mean(ACC, na.rm = TRUE) * 100, 
-            sd_acc = sd(ACC, na.rm = TRUE) * 100, 
-            sem_acc = (sd_acc/sqrt(n)))
-data_s_g
-```
+rt_ind <- summarise_individual(
+  data_rt,
+  id_var = PID,
+  group_vars = "GROUP",
+  response_var = RT
+)
+rt_ind
 
-## reaction time ##
-
-at the pid level
-
-```{r}
-data_s_rt_pid <- data_rt %>% 
-  group_by(PID, GROUP) %>%
-  summarise(mean_rt = mean(RT, na.rm = TRUE), 
-            sd_rt = sd(RT, na.rm = TRUE))
-head(data_s_rt_pid)
-```
-
-at the group level
-
-```{r}
-data_s_rt_g <- data_rt %>% 
-  group_by(GROUP) %>%
-  summarise(n=length(unique(PID)),
-            mean_rt = mean(RT, na.rm = TRUE), 
-            sd_rt = sd(RT, na.rm = TRUE), 
-            sem_rt = (sd_rt/sqrt(n)))
-data_s_rt_g
+rt_group <- summarise_group(
+  data_rt,
+  id_var = PID,
+  group_vars = "GROUP",
+  response_var = RT
+)
+rt_group
 ```
 
 # 5. make some plots #
 
+## custom raincloud plots ##
+
 plot accuracy
 
 ```{r}
-p5.1 <- ggplot(data_s_pid, aes(x = GROUP, y = mean_acc, 
-                               fill = GROUP, colour = GROUP)) +
-  geom_jitter(position=position_jitterdodge(dodge.width =1), 
-              size = 2.5, colour="grey") +
-  geom_violin(alpha = 0.5, position=pd2) +
-  geom_errorbar(data = data_s_g, aes(ymin=mean_acc-sem_acc, ymax=mean_acc+sem_acc), 
-                width=.3, size =0.5, colour = "black", position=pd2) +
-  geom_point(data = data_s_g, colour = "black", position=pd2, size =4) +
-  geom_line(data=data_s_g, group=1, colour = "black") +
-  xlab("Training Condition") + 
-  ylab('Percentage Correct') + 
-  scale_fill_brewer(palette = "Dark2") +
-  scale_colour_brewer(palette = "Dark2") +
-  theme(legend.position = "none")
-p5.1
+p5.4 <- plot_rain(
+  acc_ind,
+  acc_group,
+  x_var = "GROUP",
+  y_var = "mean_val",
+  x_label = "Training Condition",
+  y_label = "Percentage Correct",
+  point_spread = .1
+)
+p5.4
 ```
 
 plot rt
 
 ```{r}
-p5.2 <- ggplot(data_s_rt_pid, aes(x = GROUP, y = mean_rt, 
-                               fill = GROUP, colour = GROUP)) +
-  geom_jitter(position=position_jitterdodge(dodge.width =1), 
-              size = 2.5, colour="grey") +
-  geom_violin(alpha = 0.5, position=pd2) +
-  geom_errorbar(data = data_s_rt_g, aes(ymin=mean_rt-sem_rt,
-                                        ymax=mean_rt+sem_rt), 
-                width=.3, size =0.5, colour = "black", position=pd2) +
-  geom_point(data = data_s_rt_g, colour = "black", position=pd2, size =4) +
-  geom_line(data=data_s_rt_g, group=1, colour = "black") +
-  xlab("Training Condition") + 
-  ylab('Mean Reaction Time (ms)') + 
-  scale_fill_brewer(palette = "Dark2") +
-  scale_colour_brewer(palette = "Dark2") +
-  theme(legend.position = "none")
-p5.2
+p5.5 <- plot_rain(
+  rt_ind,
+  rt_group,
+  x_var = "GROUP",
+  y_var = "mean_val",
+  x_label = "Training Condition",
+  y_label = "Mean Reaction Time (ms)",
+  point_spread = .1
+)
+p5.5
 ```
 
 plot together
 
 ```{r}
-p5.3 <- (p5.1 | p5.2) +
-  plot_annotation(tag_levels = 'A')
-p5.3
+p5.6 <- (p5.4 | p5.5) +
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(axes = "collect")
+p5.6
 
-ggsave("figures/descriptive/violin_acc_rt.jpeg",
+ggsave("figures/descriptive/rain_acc_rt.jpeg",
        width = 10, height = 6, dpi = 800)
 ```
 
-# 6. write out the data #
+# 6. day 1 vs day 5 data #
 
-## data for plotting and modelling via brms ##
+Compare the day 1 summary data with the day 5 summary data
+
+## read in the day 1 data ##
+
+```{r}
+## read in
+day1_raw <- read_csv("data/processed/day1_pre_knots_data.csv")
+head(day1_raw)
+```
+
+do some checks 
+
+```{r}
+## only day 1, session 1
+day1_raw %>%
+  distinct(DAY, SESSION) 
+
+## 18 PIDs, PID 3 and 17 are not included
+day1_raw %>% 
+  distinct(PID)
+```
+
+## wrangle the day 1 data ##
+
+```{r}
+## wrangle
+day1_acc_rt <- day1_raw |>
+  select(PID, DAY, SESSION, GROUP, MATCH, RESPONSE, RT) |>
+  mutate(ACC = if_else(MATCH == RESPONSE, 1, 0)) |>
+  mutate(
+    DAY = case_when(
+      DAY == 1 ~ "Day 1",
+      .default = "Day 5"
+    ),
+    GROUP = case_when(
+      GROUP == 1 ~ "name",
+      GROUP == 2 ~ "tie",
+      GROUP == 3 ~ "both",
+      .default = "untrained"
+    )
+  )
+head(day1_acc_rt)
+glimpse(day1_acc_rt)
+
+## create rt data
+day1_rt <- day1_acc_rt %>% 
+  filter(ACC==1)
+head(day1_rt)
+glimpse(day1_rt)
+
+## check PIDs
+day1_acc_rt |>  
+  distinct(PID)
+```
+
+## join day 1 and day 5 data ##
+
+accuracy
+
+```{r}
+day1v5_data <- data |>
+  add_column(DAY = "Day 5", SESSION = 2) |>
+  select(PID, DAY, SESSION, everything()) |>
+  mutate(PID=as.numeric(as.character(PID))) |>
+  bind_rows(day1_acc_rt) |>
+  mutate(
+    PID = factor(PID),
+    DAY = factor(DAY),
+    GROUP = factor(GROUP, levels = c("untrained", "name", "tie", "both"))
+  )
+head(day1v5_data)
+glimpse(day1v5_data)
+summary(day1v5_data)
+
+## check PIDs
+day1v5_data |>  
+  distinct(PID)
+```
+
+rt
+
+```{r}
+day1v5_data_rt <- day1v5_data |> 
+  filter(ACC==1)
+head(day1v5_data_rt)
+glimpse(day1v5_data_rt)
+```
+
+## create summary data ##
+
+accuracy 
+
+```{r}
+day1v5_acc_ind <- summarise_individual(
+  day1v5_data,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = ACC,
+  scale = 100
+)
+day1v5_acc_ind
+
+day1v5_acc_group <- summarise_group(
+  day1v5_data,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = ACC,
+  scale = 100
+)
+day1v5_acc_group
+```
+
+rt
+
+```{r}
+day1v5_rt_ind <- summarise_individual(
+  day1v5_data_rt,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = RT
+)
+day1v5_rt_ind
+
+day1v5_rt_group <- summarise_group(
+  day1v5_data_rt,
+  id_var = PID,
+  group_vars = c("DAY", "GROUP"),
+  response_var = RT
+)
+day1v5_rt_group
+```
+
+plot accuracy
+
+```{r}
+p6.1 <- plot_rain(
+  day1v5_acc_ind,
+  day1v5_acc_group,
+  x_var = "GROUP",
+  y_var = "mean_val",
+  facet_var = "DAY",
+  x_label = "Training Condition",
+  y_label = "Percentage Correct",
+  point_spread = .1
+) 
+p6.1
+```
+
+plot rt
+
+```{r}
+p6.2 <- plot_rain(
+  day1v5_rt_ind,
+  day1v5_rt_group,
+  x_var = "GROUP",
+  y_var = "mean_val",
+  facet_var = "DAY",
+  x_label = "Training Condition",
+  y_label = "Mean Reaction Time (ms)",
+  point_spread = .1
+)
+p6.2
+```
+
+plot together
+
+```{r}
+p6.3 <- (p6.1 / p6.2) +
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(axes = "collect")
+p6.3
+
+ggsave("figures/descriptive/day1v5_rain_acc_rt.jpeg",
+       width = 10, height = 10, dpi = 800)
+```
+
+## wrangle grop-level summary data for supplementary materials ##
+
+```{r}
+day1v5_group <- bind_rows(day1v5_acc_group, day1v5_rt_group) |> 
+  mutate(variable = rep(c("Accuracy (% correct)", "Reaction time (ms)" ), each = 8)) |> 
+  clean_names() |> 
+  rename(condition = group, mean = mean_val, sem = sem_val) |> 
+  select(variable, day, condition, mean, sem)
+day1v5_group  
+```
+
+# 7. write out the data #
+
+## day 5 data for plotting and modelling via brms ##
 
 this is the data for acc and rt labelled as it is in plots
 It can be used for modelling in the manifest analysis of rt and acc separately
@@ -264,6 +448,19 @@ It can be used for modelling in the manifest analysis of rt and acc separately
 ```{r}
 write_csv(data, "data/processed/data_acc.csv")
 write_csv(data_rt, "data/processed/data_rt.csv")
+```
+
+## day 1 vs 5 data for plotting and modelling via brms ##
+
+```{r}
+write_csv(day1v5_data, "data/processed/day1v5_data_acc.csv")
+write_csv(day1v5_data_rt, "data/processed/day1v5_data_rt.csv")
+```
+
+## day 1 vs 5 group-level summary data for supplementary tables ##
+
+```{r}
+write_csv(day1v5_group, "data/processed/data1v5_group.csv")
 ```
 
 ## data for use in LBA modelling ##
