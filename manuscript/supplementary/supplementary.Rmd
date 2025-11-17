@@ -59,13 +59,21 @@ knitr::opts_chunk$set(fig.pos='H', out.extra = '',
 
 ### Descriptive statistics
 
-Supplementary Table 1 reports means and standard errors for accuracy and reaction time data as a function of training day and condition.
+Supplementary Table 1 reports means and standard errors for accuracy and reaction time data as a function of training day and condition. 
 
 (ref:descriptive-caption) Descriptive statistics for accuracy and reaction time data by training day and condition.
 
 ```{r descriptive-table}
 descriptives <- read_csv("../../tables/manifest/descriptives.csv") |>
-  mutate(day = as_factor(str_remove(day, "Day ")))
+  ## create a factor and replace repeated variable terms
+  mutate(
+    day = as_factor(str_remove(day, "Day ")),
+    variable = if_else(
+      variable != lag(variable, default = ""),
+      variable,
+      ""
+    )
+  )
 
 apa_table(
   descriptives,
@@ -77,13 +85,13 @@ apa_table(
 
 In addition to our evidence accumulation modelling analysis, we also analysed accuracy and reaction time (RT) data separately using multi-level regression. To do so, we used a Bayesian estimation approach to regression (McElreath, 2020). Specifically, we used the R package “brms” to build multi-level regression models (Bürkner, 2017).
 
-Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (untrained, name, tie, both). A shifted lognormal model was used to fit reaction time data, whereas accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (Gelman, 2006). Supplementary Table 1 provides details of the priors used in these models. The formulas for the full models (Model 1) used to fit reaction time and accuracy data are specified below: 
-$$rt \sim 1 + training type + \\
-(1 + training type | pid), \\
+Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an interaction effect of training condition (untrained, name, tie, both) by testing session (day 1 vs. day 5). The day 1 session data was pre-training and the day 5 session data was post-training. A shifted lognormal model was used to fit reaction time data, whereas accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (Gelman, 2006). Supplementary Table 2 provides details of the priors used in these models. The formulas for the full models (Model 3) used to fit reaction time and accuracy data are specified below: 
+$$rt \sim 1 + condition * day + \\
+(1 + condition * day | pid), \\
 ndt \sim (1 | pid)$$ 
-$$acc \sim 1 + training type + \\
-(1 + training type | pid)$$ 
-*Note:* RT = reaction time (ms); acc= accuracy (0,1); training type = training condition (untrained vs. naming vs. tying vs. both); pid = subject/participant identifier; ndt = non-decision time.
+$$acc \sim 1 + condition * day + \\
+(1 + condition * day | pid)$$ 
+*Note:* RT = reaction time (ms); acc= accuracy (0,1); condition = training condition (untrained vs. naming vs. tying vs. both); day = day of testing session (day 1 vs. day 5); pid = subject/participant identifier; ndt = non-decision time.
 
 (ref:prior-table-caption) Priors used for the separate analysis of RT and accuracy data.
 
@@ -118,9 +126,9 @@ apa_table(
 
 \newpage
 
-There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition, accuracy was lower in both the tying and naming conditions, but slightly higher in the combined condition.
+Consistent with the raw data plots in the main text (Figure 3), there were no clear effects of training condition or the day of testing session on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training condition, the training day and their interaction overlapped with zero. This suggests that relative to the untrained condition, accuracy remained largely similar from pre- to post-test as a function of training condition.
 
-There also appeared to be relatively small effects of training type on RT (see Supplementary Figure 1B). Inspection of the posterior distribution for the fixed effects of training type revealed values which primarily fell below zero. This suggests that relative to knots that received no training, participants responded faster to knots that received naming, tying and both naming and tying training.
+In contrast, as can be seen in the raw data plots in the main text (Figure 3), RT was generally lower at the post-test (day 5) compared to the pre-test for all conditions (including the untrained condition), but this effect was rather modest in size. This pattern of results is illustrated by the posterior distribution for the effect of testing day, which is negative, and which means that the untrained condition has lower RTs at day 5 than day 1 (day 5 effect). The interaction effects show that the difference between untrained and naming is more negative at day 5 than day 1, whereas the other interaction terms show a greater overlap with zero. 
 
 (ref:fixef-caption) Fixed Effects for the Most Complex Model for (A) Accuracy and (B) Reaction Time. Points represent the median value of the posterior distribution for that estimate, the thicker line represents 66th percentile, while the thinner line is the 95th percentile of the distribution. The untrained condition was the reference group in these regression models.
 
@@ -136,7 +144,7 @@ As much as possible, we used settings that were recommended for hierarchical sam
 
 ### Priors
 
-Priors were chosen to have little influence on estimation. Priors were normal distributions that were truncated below zero for B, A and sv parameters, and truncated at 0.1s for the t0 parameter (assuming that responses made in less than 0.1s are implausible). The t0 parameter was truncated above by 1s. There were no other truncations, so the v prior was unbounded. The prior mean for B was 1 and for A 0.5. The v parameter for the true accumulator was given a prior mean of 1, while the mismatching accumulator was given a prior mean of 0. The sv parameter for the matching accumulator had a prior mean of 0.5. The t0 parameter had a prior mean of 0.2s. All priors had a standard deviation of 2. Mean parameters of population distributions were assumed to have priors of the same form as for individual estimation, and the standard deviations of hyper parameters were assumed to have exponential distributions with a scale parameter of one.
+Priors were chosen to have little influence on estimation (Supplementary Table 3). Priors were normal distributions that were truncated below zero for B, A and sv parameters, and truncated at 0.1s for the t0 parameter (assuming that responses made in less than 0.1s are implausible). The t0 parameter was truncated above by 1s. There were no other truncations, so the v prior was unbounded. The prior mean for B was 1 and for A 0.5. The v parameter for the true accumulator was given a prior mean of 1, while the mismatching accumulator was given a prior mean of 0. The sv parameter for the matching accumulator had a prior mean of 0.5. The t0 parameter had a prior mean of 0.2s. All priors had a standard deviation of 2. Mean parameters of population distributions were assumed to have priors of the same form as for individual estimation, and the standard deviations of hyper parameters were assumed to have exponential distributions with a scale parameter of one.
 
 (ref:prior-lba-table-caption) Priors used for the LBA analysis.
 
@@ -187,20 +195,36 @@ The following supplementary tables provide point and interval estimates for the 
 (ref:group-lba-table-caption) Point (median) and interval (95% quantile) estimates by training day and condition.
 
 ```{r group-lba-table}
-group_q <- read_csv("../../tables/ea/group_q.csv") |> 
-  mutate(day = factor(day))
+group_q <- read_csv("../../tables/ea/group_q.csv") |>
+  ## create a factor and replace repeated variable terms
+  mutate(
+    day = factor(day),
+    parameter = if_else(
+      parameter != lag(parameter, default = ""),
+      parameter,
+      ""
+    )
+  )
 
 apa_table(
   group_q,
-  caption = "(ref:group-lba-table-caption)",
-) 
+  caption = "(ref:group-lba-table-caption)"
+)
 ```
 
 (ref:contrasts-lba-table-caption) Point (median) and interval (95% quantile) estimates for pairwise contrasts between conditions on day 1 and day 5.
 
 ```{r contrasts-lba-table}
 contrasts_q <- read_csv("../../tables/ea/contrasts_q.csv") |> 
-  mutate(day = factor(day))
+  ## create a factor and replace repeated variable terms
+  mutate(
+    day = factor(day),
+    parameter = if_else(
+      parameter != lag(parameter, default = ""),
+      parameter,
+      ""
+    )
+  )
 
 apa_table(
   contrasts_q,
@@ -212,7 +236,15 @@ apa_table(
 (ref:day-contrasts-lba-table-caption) Point (median) and interval (95% quantile) estimates for pairwise contrasts between pre-training and post-training across training conditions.
 
 ```{r day-contrasts-lba-table}
-day_contrasts_q <- read_csv("../../tables/ea/day_contrasts_q.csv")
+day_contrasts_q <- read_csv("../../tables/ea/day_contrasts_q.csv") |>
+  ## replace repeated variable terms
+  mutate(
+    parameter = if_else(
+      parameter != lag(parameter, default = ""),
+      parameter,
+      ""
+    )
+  )
 
 apa_table(
   day_contrasts_q,

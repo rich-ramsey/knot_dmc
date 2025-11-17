@@ -202,21 +202,21 @@ Supplementary Table 1 reports means and standard errors for accuracy and reactio
 variable & \multicolumn{1}{c}{day} & \multicolumn{1}{c}{condition} & \multicolumn{1}{c}{mean} & \multicolumn{1}{c}{sem}\\
 \midrule
 Accuracy (\% correct) & 1 & untrained & 87.64 & 7.77\\
-Accuracy (\% correct) & 1 & name & 86.67 & 8.02\\
-Accuracy (\% correct) & 1 & tie & 85.51 & 8.31\\
-Accuracy (\% correct) & 1 & both & 84.23 & 8.60\\
-Accuracy (\% correct) & 5 & untrained & 87.36 & 7.84\\
-Accuracy (\% correct) & 5 & name & 83.76 & 8.71\\
-Accuracy (\% correct) & 5 & tie & 85.14 & 8.40\\
-Accuracy (\% correct) & 5 & both & 88.89 & 7.42\\
+ & 1 & name & 86.67 & 8.02\\
+ & 1 & tie & 85.51 & 8.31\\
+ & 1 & both & 84.23 & 8.60\\
+ & 5 & untrained & 87.36 & 7.84\\
+ & 5 & name & 83.76 & 8.71\\
+ & 5 & tie & 85.14 & 8.40\\
+ & 5 & both & 88.89 & 7.42\\
 Reaction time (ms) & 1 & untrained & 1,237.01 & 77.49\\
-Reaction time (ms) & 1 & name & 1,315.91 & 85.74\\
-Reaction time (ms) & 1 & tie & 1,279.28 & 94.47\\
-Reaction time (ms) & 1 & both & 1,213.33 & 87.34\\
-Reaction time (ms) & 5 & untrained & 1,139.32 & 81.24\\
-Reaction time (ms) & 5 & name & 1,054.54 & 81.90\\
-Reaction time (ms) & 5 & tie & 1,119.05 & 83.95\\
-Reaction time (ms) & 5 & both & 1,081.95 & 81.09\\
+ & 1 & name & 1,315.91 & 85.74\\
+ & 1 & tie & 1,279.28 & 94.47\\
+ & 1 & both & 1,213.33 & 87.34\\
+ & 5 & untrained & 1,139.32 & 81.24\\
+ & 5 & name & 1,054.54 & 81.90\\
+ & 5 & tie & 1,119.05 & 83.95\\
+ & 5 & both & 1,081.95 & 81.09\\
 \bottomrule
 \end{tabular}
 
@@ -229,13 +229,13 @@ Reaction time (ms) & 5 & both & 1,081.95 & 81.09\\
 
 In addition to our evidence accumulation modelling analysis, we also analysed accuracy and reaction time (RT) data separately using multi-level regression. To do so, we used a Bayesian estimation approach to regression (McElreath, 2020). Specifically, we used the R package ``brms'' to build multi-level regression models (Bürkner, 2017).
 
-Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an effect of training type (untrained, name, tie, both). A shifted lognormal model was used to fit reaction time data, whereas accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (Gelman, 2006). Supplementary Table 1 provides details of the priors used in these models. The formulas for the full models (Model 1) used to fit reaction time and accuracy data are specified below:
-\[rt \sim 1 + training type + \\
-(1 + training type | pid), \\
+Models were built incrementally towards the most complex model. This meant that all fixed and varying effects that the design would permit were included in the full model (Barr et al., 2013). Model 0 for both accuracy and reaction time were intercept only models so that we could compare all subsequent models that included effects of interest to a model without any predictors. The most complex model included an interaction effect of training condition (untrained, name, tie, both) by testing session (day 1 vs.~day 5). The day 1 session data was pre-training and the day 5 session data was post-training. A shifted lognormal model was used to fit reaction time data, whereas accuracy data was fit with a Bernoulli model. Priors were set using a weakly informative approach (Gelman, 2006). Supplementary Table 2 provides details of the priors used in these models. The formulas for the full models (Model 3) used to fit reaction time and accuracy data are specified below:
+\[rt \sim 1 + condition * day + \\
+(1 + condition * day | pid), \\
 ndt \sim (1 | pid)\]
-\[acc \sim 1 + training type + \\
-(1 + training type | pid)\]
-\emph{Note:} RT = reaction time (ms); acc= accuracy (0,1); training type = training condition (untrained vs.~naming vs.~tying vs.~both); pid = subject/participant identifier; ndt = non-decision time.
+\[acc \sim 1 + condition * day + \\
+(1 + condition * day | pid)\]
+\emph{Note:} RT = reaction time (ms); acc= accuracy (0,1); condition = training condition (untrained vs.~naming vs.~tying vs.~both); day = day of testing session (day 1 vs.~day 5); pid = subject/participant identifier; ndt = non-decision time.
 
 
 
@@ -278,9 +278,9 @@ Reaction time & normal (6.68,0.5) & Intercept & \\
 
 \newpage
 
-There was some evidence for relatively small effects of training type on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training type overlapped with zero, but did have values which fell mainly below or above zero. This suggests that relative to the untrained condition, accuracy was lower in both the tying and naming conditions, but slightly higher in the combined condition.
+Consistent with the raw data plots in the main text (Figure 3), there were no clear effects of training condition or the day of testing session on accuracy (see Supplementary Figure 1A). The posterior distribution for the effect of each training condition, the training day and their interaction overlapped with zero. This suggests that relative to the untrained condition, accuracy remained largely similar from pre- to post-test as a function of training condition.
 
-There also appeared to be relatively small effects of training type on RT (see Supplementary Figure 1B). Inspection of the posterior distribution for the fixed effects of training type revealed values which primarily fell below zero. This suggests that relative to knots that received no training, participants responded faster to knots that received naming, tying and both naming and tying training.
+In contrast, as can be seen in the raw data plots in the main text (Figure 3), RT was generally lower at the post-test (day 5) compared to the pre-test for all conditions (including the untrained condition), but this effect was rather modest in size. This pattern of results is illustrated by the posterior distribution for the effect of testing day, which is negative, and which means that the untrained condition has lower RTs at day 5 than day 1 (day 5 effect). The interaction effects show that the difference between untrained and naming is more negative at day 5 than day 1, whereas the other interaction terms show a greater overlap with zero.
 
 
 
@@ -301,7 +301,7 @@ As much as possible, we used settings that were recommended for hierarchical sam
 
 \subsubsection{Priors}\label{priors}
 
-Priors were chosen to have little influence on estimation. Priors were normal distributions that were truncated below zero for B, A and sv parameters, and truncated at 0.1s for the t0 parameter (assuming that responses made in less than 0.1s are implausible). The t0 parameter was truncated above by 1s. There were no other truncations, so the v prior was unbounded. The prior mean for B was 1 and for A 0.5. The v parameter for the true accumulator was given a prior mean of 1, while the mismatching accumulator was given a prior mean of 0. The sv parameter for the matching accumulator had a prior mean of 0.5. The t0 parameter had a prior mean of 0.2s. All priors had a standard deviation of 2. Mean parameters of population distributions were assumed to have priors of the same form as for individual estimation, and the standard deviations of hyper parameters were assumed to have exponential distributions with a scale parameter of one.
+Priors were chosen to have little influence on estimation (Supplementary Table 3). Priors were normal distributions that were truncated below zero for B, A and sv parameters, and truncated at 0.1s for the t0 parameter (assuming that responses made in less than 0.1s are implausible). The t0 parameter was truncated above by 1s. There were no other truncations, so the v prior was unbounded. The prior mean for B was 1 and for A 0.5. The v parameter for the true accumulator was given a prior mean of 1, while the mismatching accumulator was given a prior mean of 0. The sv parameter for the matching accumulator had a prior mean of 0.5. The t0 parameter had a prior mean of 0.2s. All priors had a standard deviation of 2. Mean parameters of population distributions were assumed to have priors of the same form as for individual estimation, and the standard deviations of hyper parameters were assumed to have exponential distributions with a scale parameter of one.
 
 
 
@@ -341,7 +341,7 @@ st0 & 0 & - & - & -\\
 
 \newpage
 
-Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 3).
+Plots of prior and posterior distributions revealed strong updating (i.e., posteriors dominated priors), making it clear that the prior assumptions had little influence on posterior estimates (see Supplementary Figure 2).
 
 
 
@@ -387,29 +387,29 @@ The following supplementary tables provide point and interval estimates for the 
 parameter & \multicolumn{1}{c}{day} & \multicolumn{1}{c}{training} & \multicolumn{1}{c}{value} & \multicolumn{1}{c}{.lower} & \multicolumn{1}{c}{.upper}\\
 \midrule
 threshold & 1 & untrained & 1.45 & 1.27 & 1.67\\
-threshold & 1 & name & 2.46 & 2.26 & 2.66\\
-threshold & 1 & tie & 2.09 & 1.84 & 2.33\\
-threshold & 1 & both & 1.95 & 1.74 & 2.17\\
-threshold & 5 & untrained & 1.83 & 1.70 & 1.97\\
-threshold & 5 & name & 0.76 & 0.64 & 0.88\\
-threshold & 5 & tie & 0.68 & 0.57 & 0.79\\
-threshold & 5 & both & 0.64 & 0.53 & 0.75\\
+ & 1 & name & 2.46 & 2.26 & 2.66\\
+ & 1 & tie & 2.09 & 1.84 & 2.33\\
+ & 1 & both & 1.95 & 1.74 & 2.17\\
+ & 5 & untrained & 1.83 & 1.70 & 1.97\\
+ & 5 & name & 0.76 & 0.64 & 0.88\\
+ & 5 & tie & 0.68 & 0.57 & 0.79\\
+ & 5 & both & 0.64 & 0.53 & 0.75\\
 drift rate & 1 & untrained & 2.74 & 2.47 & 3.01\\
-drift rate & 1 & name & 2.25 & 2.03 & 2.48\\
-drift rate & 1 & tie & 2.42 & 2.13 & 2.71\\
-drift rate & 1 & both & 2.25 & 2.00 & 2.52\\
-drift rate & 5 & untrained & 2.08 & 1.85 & 2.31\\
-drift rate & 5 & name & 2.30 & 2.01 & 2.60\\
-drift rate & 5 & tie & 2.39 & 2.13 & 2.67\\
-drift rate & 5 & both & 3.12 & 2.74 & 3.53\\
+ & 1 & name & 2.25 & 2.03 & 2.48\\
+ & 1 & tie & 2.42 & 2.13 & 2.71\\
+ & 1 & both & 2.25 & 2.00 & 2.52\\
+ & 5 & untrained & 2.08 & 1.85 & 2.31\\
+ & 5 & name & 2.30 & 2.01 & 2.60\\
+ & 5 & tie & 2.39 & 2.13 & 2.67\\
+ & 5 & both & 3.12 & 2.74 & 3.53\\
 non-decision time & 1 & untrained & 0.49 & 0.45 & 0.53\\
-non-decision time & 1 & name & 0.31 & 0.27 & 0.36\\
-non-decision time & 1 & tie & 0.37 & 0.31 & 0.43\\
-non-decision time & 1 & both & 0.39 & 0.34 & 0.44\\
-non-decision time & 5 & untrained & 0.26 & 0.22 & 0.29\\
-non-decision time & 5 & name & 0.50 & 0.47 & 0.53\\
-non-decision time & 5 & tie & 0.51 & 0.48 & 0.54\\
-non-decision time & 5 & both & 0.52 & 0.50 & 0.55\\
+ & 1 & name & 0.31 & 0.27 & 0.36\\
+ & 1 & tie & 0.37 & 0.31 & 0.43\\
+ & 1 & both & 0.39 & 0.34 & 0.44\\
+ & 5 & untrained & 0.26 & 0.22 & 0.29\\
+ & 5 & name & 0.50 & 0.47 & 0.53\\
+ & 5 & tie & 0.51 & 0.48 & 0.54\\
+ & 5 & both & 0.52 & 0.50 & 0.55\\
 \bottomrule
 \end{tabular}
 
@@ -435,41 +435,41 @@ parameter & \multicolumn{1}{c}{day} & \multicolumn{1}{c}{contrast} & \multicolum
 \midrule
 \endhead
 threshold & 1 & name - untrained & 1.01 & 0.73 & 1.27\\
-threshold & 1 & tie - untrained & 0.63 & 0.30 & 0.95\\
-threshold & 1 & both - untrained & 0.50 & 0.22 & 0.78\\
-threshold & 1 & both - name & -0.51 & -0.81 & -0.21\\
-threshold & 1 & both - tie & -0.13 & -0.47 & 0.19\\
-threshold & 1 & tie - name & -0.38 & -0.67 & -0.07\\
-threshold & 5 & name - untrained & -1.08 & -1.25 & -0.89\\
-threshold & 5 & tie - untrained & -1.15 & -1.33 & -0.98\\
-threshold & 5 & both - untrained & -1.19 & -1.38 & -1.03\\
-threshold & 5 & both - name & -0.12 & -0.29 & 0.05\\
-threshold & 5 & both - tie & -0.04 & -0.19 & 0.11\\
-threshold & 5 & tie - name & -0.08 & -0.24 & 0.09\\
+ & 1 & tie - untrained & 0.63 & 0.30 & 0.95\\
+ & 1 & both - untrained & 0.50 & 0.22 & 0.78\\
+ & 1 & both - name & -0.51 & -0.81 & -0.21\\
+ & 1 & both - tie & -0.13 & -0.47 & 0.19\\
+ & 1 & tie - name & -0.38 & -0.67 & -0.07\\
+ & 5 & name - untrained & -1.08 & -1.25 & -0.89\\
+ & 5 & tie - untrained & -1.15 & -1.33 & -0.98\\
+ & 5 & both - untrained & -1.19 & -1.38 & -1.03\\
+ & 5 & both - name & -0.12 & -0.29 & 0.05\\
+ & 5 & both - tie & -0.04 & -0.19 & 0.11\\
+ & 5 & tie - name & -0.08 & -0.24 & 0.09\\
 drift rate & 1 & name - untrained & -0.49 & -0.83 & -0.13\\
-drift rate & 1 & tie - untrained & -0.31 & -0.71 & 0.08\\
-drift rate & 1 & both - untrained & -0.48 & -0.86 & -0.10\\
-drift rate & 1 & both - name & 0.00 & -0.34 & 0.35\\
-drift rate & 1 & both - tie & -0.17 & -0.56 & 0.23\\
-drift rate & 1 & tie - name & 0.17 & -0.20 & 0.54\\
-drift rate & 5 & name - untrained & 0.22 & -0.15 & 0.60\\
-drift rate & 5 & tie - untrained & 0.31 & -0.04 & 0.67\\
-drift rate & 5 & both - untrained & 1.04 & 0.61 & 1.51\\
-drift rate & 5 & both - name & 0.83 & 0.33 & 1.32\\
-drift rate & 5 & both - tie & 0.73 & 0.26 & 1.20\\
-drift rate & 5 & tie - name & 0.09 & -0.30 & 0.49\\
+ & 1 & tie - untrained & -0.31 & -0.71 & 0.08\\
+ & 1 & both - untrained & -0.48 & -0.86 & -0.10\\
+ & 1 & both - name & 0.00 & -0.34 & 0.35\\
+ & 1 & both - tie & -0.17 & -0.56 & 0.23\\
+ & 1 & tie - name & 0.17 & -0.20 & 0.54\\
+ & 5 & name - untrained & 0.22 & -0.15 & 0.60\\
+ & 5 & tie - untrained & 0.31 & -0.04 & 0.67\\
+ & 5 & both - untrained & 1.04 & 0.61 & 1.51\\
+ & 5 & both - name & 0.83 & 0.33 & 1.32\\
+ & 5 & both - tie & 0.73 & 0.26 & 1.20\\
+ & 5 & tie - name & 0.09 & -0.30 & 0.49\\
 non-decision time & 1 & name - untrained & -0.18 & -0.24 & -0.12\\
-non-decision time & 1 & tie - untrained & -0.12 & -0.19 & -0.05\\
-non-decision time & 1 & both - untrained & -0.10 & -0.17 & -0.04\\
-non-decision time & 1 & both - name & 0.08 & 0.01 & 0.15\\
-non-decision time & 1 & both - tie & 0.02 & -0.06 & 0.10\\
-non-decision time & 1 & tie - name & 0.06 & -0.01 & 0.13\\
-non-decision time & 5 & name - untrained & 0.24 & 0.19 & 0.29\\
-non-decision time & 5 & tie - untrained & 0.25 & 0.20 & 0.30\\
-non-decision time & 5 & both - untrained & 0.27 & 0.22 & 0.31\\
-non-decision time & 5 & both - name & 0.02 & -0.02 & 0.07\\
-non-decision time & 5 & both - tie & 0.02 & -0.02 & 0.06\\
-non-decision time & 5 & tie - name & 0.01 & -0.04 & 0.05\\
+ & 1 & tie - untrained & -0.12 & -0.19 & -0.05\\
+ & 1 & both - untrained & -0.10 & -0.17 & -0.04\\
+ & 1 & both - name & 0.08 & 0.01 & 0.15\\
+ & 1 & both - tie & 0.02 & -0.06 & 0.10\\
+ & 1 & tie - name & 0.06 & -0.01 & 0.13\\
+ & 5 & name - untrained & 0.24 & 0.19 & 0.29\\
+ & 5 & tie - untrained & 0.25 & 0.20 & 0.30\\
+ & 5 & both - untrained & 0.27 & 0.22 & 0.31\\
+ & 5 & both - name & 0.02 & -0.02 & 0.07\\
+ & 5 & both - tie & 0.02 & -0.02 & 0.06\\
+ & 5 & tie - name & 0.01 & -0.04 & 0.05\\
 \bottomrule
 \end{longtable}
 
@@ -490,17 +490,17 @@ non-decision time & 5 & tie - name & 0.01 & -0.04 & 0.05\\
 parameter & \multicolumn{1}{c}{training} & \multicolumn{1}{c}{contrast} & \multicolumn{1}{c}{value} & \multicolumn{1}{c}{.lower} & \multicolumn{1}{c}{.upper}\\
 \midrule
 threshold & untrained & 5 - 1 & 0.38 & 0.15 & 0.59\\
-threshold & name & 5 - 1 & -1.71 & -1.93 & -1.48\\
-threshold & tie & 5 - 1 & -1.41 & -1.68 & -1.14\\
-threshold & both & 5 - 1 & -1.31 & -1.56 & -1.07\\
+ & name & 5 - 1 & -1.71 & -1.93 & -1.48\\
+ & tie & 5 - 1 & -1.41 & -1.68 & -1.14\\
+ & both & 5 - 1 & -1.31 & -1.56 & -1.07\\
 drift rate & untrained & 5 - 1 & -0.66 & -1.02 & -0.30\\
-drift rate & name & 5 - 1 & 0.05 & -0.32 & 0.42\\
-drift rate & tie & 5 - 1 & -0.03 & -0.42 & 0.36\\
-drift rate & both & 5 - 1 & 0.87 & 0.40 & 1.34\\
+ & name & 5 - 1 & 0.05 & -0.32 & 0.42\\
+ & tie & 5 - 1 & -0.03 & -0.42 & 0.36\\
+ & both & 5 - 1 & 0.87 & 0.40 & 1.34\\
 non-decision time & untrained & 5 - 1 & -0.23 & -0.29 & -0.18\\
-non-decision time & name & 5 - 1 & 0.19 & 0.13 & 0.25\\
-non-decision time & tie & 5 - 1 & 0.14 & 0.08 & 0.20\\
-non-decision time & both & 5 - 1 & 0.14 & 0.08 & 0.19\\
+ & name & 5 - 1 & 0.19 & 0.13 & 0.25\\
+ & tie & 5 - 1 & 0.14 & 0.08 & 0.20\\
+ & both & 5 - 1 & 0.14 & 0.08 & 0.19\\
 \bottomrule
 \end{tabular}
 
