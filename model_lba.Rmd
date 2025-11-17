@@ -345,16 +345,16 @@ plot.pp.dmc(ppKN,model.legend = TRUE,layout=c(2,4))
 dev.off()
 
 ## plot prior vs posterior
-day1_pp_plots <- plot_hyper_with_prior(hKN, pp.prior, nrow = 4, ncol = 6)
+day1_pp_plots <- plot_hyper_with_prior(hKN, pp.prior, nrow = 5, ncol = 5)
 
 # Display and save location parameters
 print(day1_pp_plots$location_plot)
 ggsave("figures/ea/day1_pp_location.jpeg",
-       width = 12, height = 8)
+       width = 12, height = 9)
 # Display and save scale parameters  
 print(day1_pp_plots$scale_plot)
 ggsave("figures/ea/day1_pp_scale.jpeg",
-       width = 12, height = 8)
+       width = 12, height = 9)
 
 h.IC.dmc(hKN,DIC=TRUE)
 
@@ -792,16 +792,16 @@ plot.pp.dmc(ppKN,model.legend = TRUE,layout=c(2,4))
 dev.off()
 
 ## plot prior vs posterior
-day5_pp_plots <- plot_hyper_with_prior(hKN, pp.prior, nrow = 4, ncol = 6)
+day5_pp_plots <- plot_hyper_with_prior(hKN, pp.prior, nrow = 5, ncol = 5)
 
 # Display and save location parameters
 print(day5_pp_plots$location_plot)
 ggsave("figures/ea/day5_pp_location.jpeg",
-       width = 12, height = 8)
+       width = 12, height = 9)
 # Display and save scale parameters  
 print(day5_pp_plots$scale_plot)
 ggsave("figures/ea/day5_pp_scale.jpeg",
-       width = 12, height = 8)
+       width = 12, height = 9)
 
 h.IC.dmc(hKN,DIC=TRUE)
 

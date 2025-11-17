@@ -503,6 +503,7 @@ plot_hyper_with_prior <- function(samples,
       theme(
         legend.position = if (add.legend) legend.pos else "none",
         strip.text = element_text(size = 9),
+        text = element_text(size = 14, face = "bold"),
         panel.grid.minor = element_blank()
       )
     
